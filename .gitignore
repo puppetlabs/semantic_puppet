@@ -1,1 +1,3 @@
 .rbenv-*
+coverage
+docs
