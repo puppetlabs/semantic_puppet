@@ -250,10 +250,12 @@ describe Semantic::Version do
           end
         end
       end
-
     end
+  end
 
-    describe '#<=>' do
+  describe '#<=>' do
+
+    context 'Spec v2.0.0' do
       def parse(vstring)
         Semantic::Version.parse(vstring)
       end
