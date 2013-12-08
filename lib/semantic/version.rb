@@ -100,23 +100,20 @@ module Semantic
     class ValidationFailure < ArgumentError; end
     def self.failure(message); ValidationFailure.new(message); end
 
-    def compare_prerelease(other)
-      # The absence of a prerelease yields a higher precedence.
-      if self.prerelease == other.prerelease
-        return 0
-      elsif self.prerelease.nil?
-        return 1
-      elsif other.prerelease.nil?
-        return -1
-      end
+    # This is a hack; tildes sort later than any valid identifier. The
+    # advantage is that we don't need to handle stable vs. prerelease
+    # comparisons separately.
+    @@STABLE_RELEASE = [ '~' ].freeze
 
-      all_mine = @prerelease || []
-      all_yours = other.instance_variable_get(:@prerelease) || []
+    def compare_prerelease(other)
+      all_mine  = @prerelease                               || @@STABLE_RELEASE
+      all_yours = other.instance_variable_get(:@prerelease) || @@STABLE_RELEASE
 
       # Precedence is determined by comparing each dot separated identifier from
       # left to right...
-      size = [all_mine.size, all_yours.size].max
+      size = [ all_mine.size, all_yours.size ].max
       Array.new(size).zip(all_mine, all_yours) do |_, mine, yours|
+
         # ...until a difference is found.
         next if mine == yours
 
@@ -137,6 +134,8 @@ module Semantic
           return 1
         end
       end
+
+      return 0
     end
   end
 end
