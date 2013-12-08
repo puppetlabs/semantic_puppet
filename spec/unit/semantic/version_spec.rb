@@ -253,6 +253,129 @@ describe Semantic::Version do
 
     end
 
+    describe '#<=>' do
+      def parse(vstring)
+        Semantic::Version.parse(vstring)
+      end
+
+      context 'Section 11' do
+        # Precedence refers to how versions are compared to each other when
+        # ordered. Precedence MUST be calculated by separating the version into
+        # major, minor, patch and pre-release identifiers in that order (Build
+        # metadata does not figure into precedence). Precedence is determined
+        # by the first difference when comparing each of these identifiers from
+        # left to right as follows: Major, minor, and patch versions are always
+        # compared numerically.
+        # Example: 1.0.0 < 2.0.0 < 2.1.0 < 2.1.1.
+        # When major, minor, and patch are equal, a pre-release version has
+        # lower precedence than a normal version.
+        # Example: 1.0.0-alpha < 1.0.0.
+        # Precedence for two pre-release versions with the same major, minor,
+        # and patch version MUST be determined by comparing each dot separated
+        # identifier from left to right until a difference is found as follows:
+        # identifiers consisting of only digits are compared numerically and
+        # identifiers with letters or hyphens are compared lexically in ASCII
+        # sort order. Numeric identifiers always have lower precedence than
+        # non-numeric identifiers. A larger set of pre-release fields has a
+        # higher precedence than a smaller set, if all of the preceding
+        # identifiers are equal.
+        # Example: 1.0.0-alpha < 1.0.0-alpha.1 < 1.0.0-alpha.beta < 1.0.0-beta
+        # < 1.0.0-beta.2 < 1.0.0-beta.11 < 1.0.0-rc.1 < 1.0.0.
+
+        context 'comparisons without prereleases' do
+          subject do
+            %w[ 1.0.0 2.0.0 2.1.0 2.1.1 ].map { |v| parse(v) }.shuffle
+          end
+
+          example 'sorted order' do
+            sorted = subject.sort.map { |v| v.to_s }
+            expect(sorted).to eql(%w[ 1.0.0 2.0.0 2.1.0 2.1.1 ])
+          end
+        end
+
+        context 'comparisons against prereleases' do
+          let(:stable) { parse('1.0.0') }
+          let(:prerelease) { parse('1.0.0-alpha') }
+
+          example 'prereleases have lower precedence' do
+            expect(stable).to be > prerelease
+            expect(prerelease).to be < stable
+          end
+        end
+
+        context 'comparisions between prereleases' do
+          example 'identical prereleases are equal' do
+            expect(parse('1.0.0-rc1')).to eql parse('1.0.0-rc1')
+          end
+
+          example 'non-numeric identifiers sort ASCIIbetically' do
+            alpha, beta = parse('1.0.0-alpha'), parse('1.0.0-beta')
+            expect(alpha).to be < beta
+            expect(beta).to be > alpha
+          end
+
+          example 'numeric identifiers sort numerically' do
+            two, eleven = parse('1.0.0-2'), parse('1.0.0-11')
+            expect(two).to be < eleven
+            expect(eleven).to be > two
+          end
+
+          example 'non-numeric identifiers have a higher precendence' do
+            number, word = parse('1.0.0-1'), parse('1.0.0-one')
+            expect(number).to be < word
+            expect(word).to be > number
+          end
+
+          example 'identifiers are parsed left-to-right' do
+            a = parse('1.0.0-these.parts.are.the-same.but.not.waffles.123')
+            b = parse('1.0.0-these.parts.are.the-same.but.not.123.waffles')
+            expect(b).to be < a
+            expect(a).to be > b
+          end
+
+          example 'larger identifier sets have precendence' do
+            a = parse('1.0.0-alpha')
+            b = parse('1.0.0-alpha.1')
+            expect(a).to be < b
+            expect(b).to be > a
+          end
+
+          example 'build metadata does not figure into precendence' do
+            a = parse('1.0.0-alpha+SHA1')
+            b = parse('1.0.0-alpha+MD5')
+            expect(a).to eql b
+            expect(a.to_s).to_not eql b.to_s
+          end
+
+          example 'sorted order' do
+            list = %w[
+              1.0.0-alpha
+              1.0.0-alpha.1
+              1.0.0-alpha.beta
+              1.0.0-beta
+              1.0.0-beta.2
+              1.0.0-beta.11
+              1.0.0-rc.1
+              1.0.0
+            ].map { |v| parse(v) }.shuffle
+
+            sorted = list.sort.map { |v| v.to_s }
+            expect(sorted).to eql %w[
+              1.0.0-alpha
+              1.0.0-alpha.1
+              1.0.0-alpha.beta
+              1.0.0-beta
+              1.0.0-beta.2
+              1.0.0-beta.11
+              1.0.0-rc.1
+              1.0.0
+            ]
+          end
+        end
+      end
+
+    end
+
   end
 
 end
