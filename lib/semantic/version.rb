@@ -7,72 +7,78 @@ module Semantic
   class Version < Numeric
     include Comparable
 
-    # Parse a semantic version string.
-    #
-    # @param ver [String] the version string to parse
-    # @return [Semantic::Version] a comparable Version object
-    def self.parse(ver)
-      _, major, minor, patch = *ver.match(/\A(\d+)\.(\d+)\.(\d+)(?:[-+]|\Z)/)
-      raise failure 'Version numbers MUST begin with X.Y.Z' if major.nil?
+    class ValidationFailure < ArgumentError; end
 
-      if [major, minor, patch].any? { |x| x =~ /^0\d+/ }
-        raise failure 'Version numbers MUST NOT contain leading zeroes'
+    class << self
+      LOOSE_REGEX = /
+        \A
+        (\d+)[.](\d+)[.](\d+) # Major . Minor . Patch
+        (?: [-](.*?))?        # Prerelease
+        (?: [+](.*?))?        # Build
+        \Z
+      /x
+
+      # Parse a semantic version string.
+      #
+      # @param ver [String] the version string to parse
+      # @return [Semantic::Version] a comparable Version object
+      def parse(ver)
+        match, major, minor, patch, prerelease, build = *ver.match(LOOSE_REGEX)
+
+        if match.nil?
+          raise 'Version numbers MUST begin with three dot-separated numbers'
+        elsif [major, minor, patch].any? { |x| x =~ /^0\d+/ }
+          raise 'Version numbers MUST NOT contain leading zeroes'
+        end
+
+        prerelease = parse_prerelease(prerelease) if prerelease
+        build = parse_build_metadata(build) if build
+
+        self.new(major.to_i, minor.to_i, patch.to_i, prerelease, build)
       end
 
-      _, prerelease = *ver.match(/\A[0-9.]+[-](.*?)(?:[+]|\Z)/)
-      if prerelease
+      private
+      def parse_prerelease(prerelease)
+        subject = 'Prerelease identifiers'
         prerelease = prerelease.split('.', -1)
 
         if prerelease.empty? or prerelease.any? { |x| x.empty? }
-          raise failure('Prerelease identifiers MUST NOT be empty')
+          raise "#{subject} MUST NOT be empty"
+        elsif prerelease.any? { |x| x =~ /[^0-9a-zA-Z-]/ }
+          raise "#{subject} MUST use only ASCII alphanumerics and hyphens"
+        elsif prerelease.any? { |x| x =~ /^0\d+$/ }
+          raise "#{subject} MUST NOT contain leading zeroes"
         end
 
-        if prerelease.any? { |x| x =~ /[^0-9a-zA-Z-]/ }
-          message = 'Prerelease identifiers MUST use only ASCII ' +
-                    'alphanumerics and hyphens'
-          raise failure(message)
-        end
-
-        if prerelease.any? { |x| x =~ /^0\d+$/ }
-          raise failure 'Prerelease identifiers MUST NOT contain leading zeroes'
-        end
-
-        prerelease.map! { |x| x =~ /^\d+$/ ? x.to_i : x }
+        return prerelease.map { |x| x =~ /^\d+$/ ? x.to_i : x }
       end
 
-      _, build = *ver.match(/\A.*?[+](.*?)\Z/)
-      if build
+      def parse_build_metadata(build)
+        subject = 'Build identifiers'
         build = build.split('.', -1)
 
         if build.empty? or build.any? { |x| x.empty? }
-          raise failure('Build identifiers MUST NOT be empty')
+          raise "#{subject} MUST NOT be empty"
+        elsif build.any? { |x| x =~ /[^0-9a-zA-Z-]/ }
+          raise "#{subject} MUST use only ASCII alphanumerics and hyphens"
         end
 
-        if build.any? { |x| x =~ /[^0-9a-zA-Z-]/ }
-          message = 'Build identifiers MUST use only ASCII alphanumerics and ' +
-                    'hyphens'
-          raise failure(message)
-        end
+        return build
       end
 
-      self.new(
-        :major => major.to_i,
-        :minor => minor.to_i,
-        :patch => patch.to_i,
-        :prerelease => prerelease,
-        :build => build
-      )
+      def raise(msg)
+        super ValidationFailure, msg, caller.drop_while { |x| x !~ /\bparse\b/ }
+      end
     end
 
     attr_accessor :major, :minor, :patch
 
-    # @param parts [Hash] the decomposed version string
-    def initialize(parts)
-      @major = parts[:major]
-      @minor = parts[:minor]
-      @patch = parts[:patch]
-      @prerelease = parts[:prerelease]
-      @build = parts[:build]
+    def initialize(major, minor, patch, prerelease, build)
+      @major      = major
+      @minor      = minor
+      @patch      = patch
+      @prerelease = prerelease
+      @build      = build
     end
 
     def prerelease
@@ -97,9 +103,6 @@ module Semantic
     end
 
     private
-    class ValidationFailure < ArgumentError; end
-    def self.failure(message); ValidationFailure.new(message); end
-
     # This is a hack; tildes sort later than any valid identifier. The
     # advantage is that we don't need to handle stable vs. prerelease
     # comparisons separately.

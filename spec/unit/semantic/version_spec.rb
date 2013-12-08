@@ -19,7 +19,7 @@ describe Semantic::Version do
         # For instance: 1.9.0 -> 1.10.0 -> 1.11.0.
 
         let(:must_begin_with_digits) do
-          'Version numbers MUST begin with X.Y.Z'
+          'Version numbers MUST begin with three dot-separated numbers'
         end
 
         let(:no_leading_zeroes) do
