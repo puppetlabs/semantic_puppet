@@ -73,7 +73,7 @@ module Semantic
 
     attr_accessor :major, :minor, :patch
 
-    def initialize(major, minor, patch, prerelease, build)
+    def initialize(major, minor, patch, prerelease = nil, build = nil)
       @major      = major
       @minor      = minor
       @patch      = patch

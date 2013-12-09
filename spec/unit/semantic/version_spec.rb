@@ -10,7 +10,6 @@ describe Semantic::Version do
     end
 
     context 'Spec v2.0.0' do
-
       context 'Section 2' do
         # A normal version number MUST take the form X.Y.Z where X, Y, and Z are
         # non-negative integers, and MUST NOT contain leading zeroes. X is the
@@ -251,15 +250,153 @@ describe Semantic::Version do
         end
       end
     end
+
+    context 'Spec v1.0.0' do
+      context 'Section 2' do
+        # A normal version number MUST take the form X.Y.Z where X, Y, and Z
+        # are integers. X is the major version, Y is the minor version, and Z
+        # is the patch version. Each element MUST increase numerically by
+        # increments of one.
+        # For instance: 1.9.0 -> 1.10.0 -> 1.11.0
+
+        let(:must_begin_with_digits) do
+          'Version numbers MUST begin with three dot-separated numbers'
+        end
+
+        let(:no_leading_zeroes) do
+          'Version numbers MUST NOT contain leading zeroes'
+        end
+
+        it 'rejects versions that contain too few parts' do
+          expect { subject('1.2') }.to raise_error(must_begin_with_digits)
+        end
+
+        it 'rejects versions that contain too many parts' do
+          expect { subject('1.2.3.4') }.to raise_error(must_begin_with_digits)
+        end
+
+        it 'rejects versions that contain non-integers' do
+          expect { subject('x.2.3') }.to raise_error(must_begin_with_digits)
+          expect { subject('1.y.3') }.to raise_error(must_begin_with_digits)
+          expect { subject('1.2.z') }.to raise_error(must_begin_with_digits)
+        end
+
+        it 'permits zeroes in version number parts' do
+          expect { subject('0.2.3') }.to_not raise_error
+          expect { subject('1.0.3') }.to_not raise_error
+          expect { subject('1.2.0') }.to_not raise_error
+        end
+
+        context 'examples' do
+          example '1.9.0' do
+            version = subject('1.9.0')
+            expect(version.major).to eql 1
+            expect(version.minor).to eql 9
+            expect(version.patch).to eql 0
+          end
+
+          example '1.10.0' do
+            version = subject('1.10.0')
+            expect(version.major).to eql 1
+            expect(version.minor).to eql 10
+            expect(version.patch).to eql 0
+          end
+
+          example '1.11.0' do
+            version = subject('1.11.0')
+            expect(version.major).to eql 1
+            expect(version.minor).to eql 11
+            expect(version.patch).to eql 0
+          end
+        end
+      end
+
+      context 'Section 4' do
+        # A pre-release version number MAY be denoted by appending an arbitrary
+        # string immediately following the patch version and a dash. The string
+        # MUST be comprised of only alphanumerics plus dash [0-9A-Za-z-].
+        # Pre-release versions satisfy but have a lower precedence than the
+        # associated normal version. Precedence SHOULD be determined by
+        # lexicographic ASCII sort order.
+        # For instance: 1.0.0-alpha1 < 1.0.0-beta1 < 1.0.0-beta2 < 1.0.0-rc1
+
+        let(:restricted_charset) do
+          'Prerelease identifiers MUST use only ASCII alphanumerics and hyphens'
+        end
+
+        let(:must_not_be_empty) do
+          'Prerelease identifiers MUST NOT be empty'
+        end
+
+        let(:no_leading_zeroes) do
+          'Prerelease identifiers MUST NOT contain leading zeroes'
+        end
+
+        it 'rejects prerelease identifiers with non-alphanumerics' do
+          expect { subject('1.2.3-$100') }.to raise_error(restricted_charset)
+          expect { subject('1.2.3-rc.1@me') }.to raise_error(restricted_charset)
+        end
+
+        it 'rejects empty prerelease versions' do
+          expect { subject('1.2.3-') }.to raise_error(must_not_be_empty)
+        end
+
+        pending 'permits numeric prerelease identifiers with leading zeroes' do
+          expect { subject('1.2.3-01') }.to raise_error(no_leading_zeroes)
+        end
+
+        it 'permits numeric prerelease identifiers of zero' do
+          expect { subject('1.2.3-0') }.to_not raise_error
+        end
+
+        it 'permits non-numeric prerelease identifiers with leading zeroes' do
+          expect { subject('1.2.3-0xDEADBEEF') }.to_not raise_error
+        end
+
+        context 'examples' do
+          example '1.0.0-alpha1' do
+            version = subject('1.0.0-alpha1')
+            expect(version.major).to eql 1
+            expect(version.minor).to eql 0
+            expect(version.patch).to eql 0
+            expect(version.prerelease).to eql 'alpha1'
+          end
+
+          example '1.0.0-beta1' do
+            version = subject('1.0.0-beta1')
+            expect(version.major).to eql 1
+            expect(version.minor).to eql 0
+            expect(version.patch).to eql 0
+            expect(version.prerelease).to eql 'beta1'
+          end
+
+          example '1.0.0-beta2' do
+            version = subject('1.0.0-beta2')
+            expect(version.major).to eql 1
+            expect(version.minor).to eql 0
+            expect(version.patch).to eql 0
+            expect(version.prerelease).to eql 'beta2'
+          end
+
+          example '1.0.0-rc1' do
+            version = subject('1.0.0-rc1')
+            expect(version.major).to eql 1
+            expect(version.minor).to eql 0
+            expect(version.patch).to eql 0
+            expect(version.prerelease).to eql 'rc1'
+          end
+        end
+      end
+    end
+
   end
 
   describe '#<=>' do
+    def parse(vstring)
+      Semantic::Version.parse(vstring)
+    end
 
     context 'Spec v2.0.0' do
-      def parse(vstring)
-        Semantic::Version.parse(vstring)
-      end
-
       context 'Section 11' do
         # Precedence refers to how versions are compared to each other when
         # ordered. Precedence MUST be calculated by separating the version into
@@ -375,7 +512,38 @@ describe Semantic::Version do
           end
         end
       end
+    end
 
+    context 'Spec v1.0.0' do
+      context 'Section 4' do
+        # A pre-release version number MAY be denoted by appending an arbitrary
+        # string immediately following the patch version and a dash. The string
+        # MUST be comprised of only alphanumerics plus dash [0-9A-Za-z-].
+        # Pre-release versions satisfy but have a lower precedence than the
+        # associated normal version. Precedence SHOULD be determined by
+        # lexicographic ASCII sort order.
+        # For instance: 1.0.0-alpha1 < 1.0.0-beta1 < 1.0.0-beta2 < 1.0.0-rc1 <
+        # 1.0.0
+
+        example 'sorted order' do
+          list = %w[
+            1.0.0-alpha1
+            1.0.0-beta1
+            1.0.0-beta2
+            1.0.0-rc1
+            1.0.0
+          ].map { |v| parse(v) }.shuffle
+
+          sorted = list.sort.map { |v| v.to_s }
+          expect(sorted).to eql %w[
+            1.0.0-alpha1
+            1.0.0-beta1
+            1.0.0-beta2
+            1.0.0-rc1
+            1.0.0
+          ]
+        end
+      end
     end
 
   end
