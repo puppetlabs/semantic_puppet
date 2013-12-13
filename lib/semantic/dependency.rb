@@ -46,30 +46,37 @@ module Semantic
       walk(graph.depends_on)
     end
 
-    def walk(dependencies, considering = [])
-      pair = dependencies.shift
-      name = pair.first
-      deps = pair.last
-      return considering if name.nil?
+    private
 
-      prefer_stable_releases(deps).reverse_each do |dep|
-        next unless dep.satisfied?
+    # @param dependencies [{ String => Array(ModuleRelease) }] the dependencies
+    # @param considering [Array(ModuleRelease)] the set of releases being tested
+    def walk(dependencies, *considering)
+      return considering if dependencies.empty?
 
-        new_dependencies = dependencies.merge(dep.depends_on) do |k, v1, v2|
-          new_deps = v1 & v2
-          throw :next if new_deps.empty?
-          new_deps
-        end
+      # Selecting a dependency from the collection...
+      name, deps = dependencies.shift
+
+      # ... we'll iterate through the list of possible versions in order.
+      preferred_releases(deps).reverse_each do |dep|
         catch(:next) do
-          considering = walk(new_dependencies, considering + [dep])
+          # After adding any new dependencies and imposing our own constraints
+          # on existing dependencies, we'll mark ourselves as "under
+          # consideration" and recurse.
+          merged = dependencies.merge(dep.depends_on) { |_,a,b| a & b }
+
+          # If all subsequent dependencies resolved well, the recursive call
+          # will return a completed dependency list. If there were problems
+          # resolving our dependencies, we'll catch `:next`, which will cause
+          # us to move to the next possibility.
+          return walk(merged, dep, *considering)
         end
-        return considering
       end
 
+      # Once we've exhausted all of our possible versions, we know that our
+      # last choice was unusable, so we'll unwind the stack and make a new
+      # choice.
       throw :next
     end
-
-    private
 
     # @param module [ModuleRelease] the release to detail
     def fetch(release, cache = Hash.new { |h,k| h[k] = {} })
@@ -89,13 +96,13 @@ module Semantic
       end
     end
 
-    def prefer_stable_releases(releases)
+    def preferred_releases(releases)
       stable = proc { |x| x.version.prerelease.nil? }
 
       if releases.none?(&stable)
-        return releases
+        return releases.select { |r| r.satisfied? }
       else
-        return releases.select(&stable)
+        return releases.select(&stable).select { |r| r.satisfied? }
       end
     end
   end
