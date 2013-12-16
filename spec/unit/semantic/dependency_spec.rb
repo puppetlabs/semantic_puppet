@@ -144,6 +144,7 @@ describe Semantic::Dependency do
 
   describe '.resolve' do
     def add_source_modules(name, versions, deps = {})
+      versions = Array(versions)
       releases = versions.map { |ver| create_release(source, name, ver, deps) }
       source.stub(:fetch).with(name).and_return(modules[name].concat(releases))
     end
@@ -185,6 +186,15 @@ describe Semantic::Dependency do
           expect(foo('1.1.0-a')).to eql %w[ 1.1.0-a ]
         end
       end
+
+      context 'when the query omits all versions' do
+        xit 'fails with an appropriate message' do
+          add_source_modules('foo', %w[ 1.0.0 1.1.0-a 1.1.0 ])
+
+          with_message = /Cannot resolve foo 2.x/
+          expect { foo('2.x') }.to raise_exception with_message
+        end
+      end
     end
 
     context 'for a module with dependencies' do
@@ -193,29 +203,39 @@ describe Semantic::Dependency do
       end
 
       it 'returns the greatest releases matching the dependency range' do
-        add_source_modules('foo', %w[ 1.1.0 ], 'bar' => '1.x')
+        add_source_modules('foo', '1.1.0', 'bar' => '1.x')
         add_source_modules('bar', %w[ 0.9.0 1.0.0 1.1.0 1.2.0 2.0.0 ])
 
         expect(foo('1.1.0')).to include %w[ foo 1.1.0 ], %w[ bar 1.2.0 ]
       end
 
-      context 'when the dependency includes both stable and prerelease versions' do
+      context 'when the dependency has both stable and prerelease versions' do
         it 'returns the greatest stable release matching the range' do
-          add_source_modules('foo', %w[ 1.1.0 ], 'bar' => '1.x')
+          add_source_modules('foo', '1.1.0', 'bar' => '1.x')
           add_source_modules('bar', %w[ 0.9.0 1.0.0 1.1.0 1.2.0-pre 2.0.0 ])
 
           expect(foo('1.1.0')).to include %w[ foo 1.1.0 ], %w[ bar 1.1.0 ]
         end
       end
 
-      context 'when the dependency omits all stable versions' do
+      context 'when the dependency has no stable versions' do
         it 'returns the greatest prerelease version matching the range' do
-          add_source_modules('foo', %w[ 1.1.0 ], 'bar' => '1.1.x')
-          add_source_modules('foo', %w[ 1.1.1 ], 'bar' => '1.1.0-a')
+          add_source_modules('foo', '1.1.0', 'bar' => '1.1.x')
+          add_source_modules('foo', '1.1.1', 'bar' => '1.1.0-a')
           add_source_modules('bar', %w[ 1.0.0 1.1.0-a 1.1.0-b 2.0.0 ])
 
           expect(foo('1.1.0')).to include %w[ foo 1.1.0 ], %w[ bar 1.1.0-b ]
           expect(foo('1.1.1')).to include %w[ foo 1.1.1 ], %w[ bar 1.1.0-a ]
+        end
+      end
+
+      context 'when the dependency cannot be satisfied' do
+        xit 'fails with an appropriate message' do
+          add_source_modules('foo', %w[ 1.1.0 ], 'bar' => '1.x')
+          add_source_modules('bar', %w[ 0.0.1 0.1.0-a 0.1.0 ])
+
+          with_message = /Cannot resolve foo 1.1.0/
+          expect { foo('1.1.0') }.to raise_exception with_message
         end
       end
     end
@@ -227,9 +247,9 @@ describe Semantic::Dependency do
 
       context 'that overlap' do
         it 'returns the greatest release satisfying all dependencies' do
-          add_source_modules('foo', %w[ 1.1.0 ], 'bar' => '1.0.0', 'baz' => '1.0.0')
-          add_source_modules('bar', %w[ 1.0.0 ], 'quxx' => '1.x')
-          add_source_modules('baz', %w[ 1.0.0 ], 'quxx' => '1.1.x')
+          add_source_modules('foo', '1.1.0', 'bar' => '1.0.0', 'baz' => '1.0.0')
+          add_source_modules('bar', '1.0.0', 'quxx' => '1.x')
+          add_source_modules('baz', '1.0.0', 'quxx' => '1.1.x')
           add_source_modules('quxx', %w[ 0.9.0 1.0.0 1.1.0 1.1.1 1.2.0 2.0.0 ])
 
           expect(foo('1.1.0')).to_not include %w[ quxx 1.2.0 ]
@@ -237,25 +257,40 @@ describe Semantic::Dependency do
         end
       end
 
-      # context 'when the dependency includes both stable and prerelease versions' do
-      #   it 'returns the greatest stable release matching the range' do
-      #     add_source_modules('foo', %w[ 1.1.0 ], 'bar' => '1.x')
-      #     add_source_modules('bar', %w[ 0.9.0 1.0.0 1.1.0 1.2.0-pre 2.0.0 ])
-      # 
-      #     expect(foo('1.1.0')).to include %w[ foo 1.1.0 ], %w[ bar 1.1.0 ]
-      #   end
-      # end
-      # 
-      # context 'when the dependency omits all stable versions' do
-      #   it 'returns the greatest prerelease version matching the range' do
-      #     add_source_modules('foo', %w[ 1.1.0 ], 'bar' => '1.1.x')
-      #     add_source_modules('foo', %w[ 1.1.1 ], 'bar' => '1.1.0-a')
-      #     add_source_modules('bar', %w[ 1.0.0 1.1.0-a 1.1.0-b 2.0.0 ])
-      # 
-      #     expect(foo('1.1.0')).to include %w[ foo 1.1.0 ], %w[ bar 1.1.0-b ]
-      #     expect(foo('1.1.1')).to include %w[ foo 1.1.1 ], %w[ bar 1.1.0-a ]
-      #   end
-      # end
+      context 'that do not overlap' do
+        xit 'fails with an appropriate message' do
+          add_source_modules('foo','1.1.0', 'bar' => '1.0.0', 'baz' => '1.0.0')
+          add_source_modules('bar','1.0.0', 'quxx' => '1.x')
+          add_source_modules('baz','1.0.0', 'quxx' => '2.x')
+          add_source_modules('quxx', %w[ 0.9.0 1.0.0 1.1.0 1.1.1 1.2.0 2.0.0 ])
+
+          with_message = /Cannot resolve foo 1.1.0/
+          expect { foo('1.1.0') }.to raise_exception with_message
+        end
+      end
+    end
+
+    context 'for a module with circular dependencies' do
+      def foo(range)
+        subject('foo' => range)
+      end
+
+      context 'that can be resolved' do
+        it 'terminates' do
+          add_source_modules('foo', '1.1.0', 'foo' => '1.x')
+
+          expect(foo('1.1.0')).to include %w[ foo 1.1.0 ]
+        end
+      end
+
+      context 'that cannot be resolved' do
+        xit 'fails with an appropriate message' do
+          add_source_modules('foo', '1.1.0', 'foo' => '1.0.0')
+
+          with_message = /Cannot resolve foo 1.1.0/
+          expect { foo('1.1.0') }.to raise_exception with_message
+        end
+      end
     end
   end
 end

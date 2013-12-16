@@ -43,7 +43,10 @@ module Semantic
     end
 
     def resolve(graph)
-      walk(graph.depends_on)
+      catch :next do
+        return walk(graph.depends_on)
+      end
+      raise Exception
     end
 
     private
@@ -56,9 +59,12 @@ module Semantic
       # Selecting a dependency from the collection...
       name, deps = dependencies.shift
 
+      # ... (and stepping over it if we've seen it before) ...
+      return walk(dependencies, *considering) unless (deps & considering).empty?
+
       # ... we'll iterate through the list of possible versions in order.
       preferred_releases(deps).reverse_each do |dep|
-        catch(:next) do
+        catch :next do
           # After adding any new dependencies and imposing our own constraints
           # on existing dependencies, we'll mark ourselves as "under
           # consideration" and recurse.
