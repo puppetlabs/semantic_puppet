@@ -3,11 +3,11 @@ require 'semantic/version'
 
 describe Semantic::Version do
 
-  describe '.parse' do
+  def subject(str)
+    Semantic::Version.parse(str)
+  end
 
-    def subject(str)
-      Semantic::Version.parse(str)
-    end
+  describe '.parse' do
 
     context 'Spec v2.0.0' do
       context 'Section 2' do
@@ -548,4 +548,61 @@ describe Semantic::Version do
 
   end
 
+  describe '#next' do
+    context 'with :major' do
+      it 'returns the next major version' do
+        expect(subject('1.0.0').next(:major)).to eql(subject('2.0.0'))
+      end
+
+      it 'does not modify the original version' do
+        v1 = subject('1.0.0')
+        v2 = v1.next(:major)
+        expect(v1).to_not eql(v2)
+      end
+
+      it 'resets the minor and patch versions to 0' do
+        expect(subject('1.1.1').next(:major)).to eql(subject('2.0.0'))
+      end
+
+      it 'removes any prerelease or build information' do
+        expect(subject('1.0.0-alpha+abc').next(:major)).to eql(subject('2.0.0'))
+      end
+    end
+
+    context 'with :minor' do
+      it 'returns the next minor version' do
+        expect(subject('1.0.0').next(:minor)).to eql(subject('1.1.0'))
+      end
+
+      it 'does not modify the original version' do
+        v1 = subject('1.0.0')
+        v2 = v1.next(:minor)
+        expect(v1).to_not eql(v2)
+      end
+
+      it 'resets the patch version to 0' do
+        expect(subject('1.1.1').next(:minor)).to eql(subject('1.2.0'))
+      end
+
+      it 'removes any prerelease or build information' do
+        expect(subject('1.1.0-alpha+abc').next(:minor)).to eql(subject('1.2.0'))
+      end
+    end
+
+    context 'with :patch' do
+      it 'returns the next patch version' do
+        expect(subject('1.1.1').next(:patch)).to eql(subject('1.1.2'))
+      end
+
+      it 'does not modify the original version' do
+        v1 = subject('1.0.0')
+        v2 = v1.next(:patch)
+        expect(v1).to_not eql(v2)
+      end
+
+      it 'removes any prerelease or build information' do
+        expect(subject('1.0.0-alpha+abc').next(:patch)).to eql(subject('1.0.1'))
+      end
+    end
+  end
 end

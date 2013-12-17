@@ -71,7 +71,7 @@ module Semantic
       end
     end
 
-    attr_accessor :major, :minor, :patch
+    attr_reader :major, :minor, :patch
 
     def initialize(major, minor, patch, prerelease = nil, build = nil)
       @major      = major
@@ -79,6 +79,25 @@ module Semantic
       @patch      = patch
       @prerelease = prerelease
       @build      = build
+    end
+
+    def next(part = nil)
+      case part
+      when :major
+        self.class.new(@major.next, 0, 0)
+      when :minor
+        self.class.new(@major, @minor.next, 0)
+      when :patch
+        self.class.new(@major, @minor, @patch.next)
+      when :prerelease
+        self.class.new(@major, @minor, @patch, @prerelease.concat([0]))
+      when :stable
+        if @prerelease
+          self.class.new(@major, @minor, @patch)
+        else
+          self.next(:patch)
+        end
+      end
     end
 
     def prerelease
@@ -139,6 +158,10 @@ module Semantic
       end
 
       return 0
+    end
+
+    def first_prerelease
+      self.class.new(@major, @minor, @patch, [])
     end
   end
 end
