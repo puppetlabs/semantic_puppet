@@ -89,8 +89,6 @@ module Semantic
         self.class.new(@major, @minor.next, 0)
       when :patch
         self.class.new(@major, @minor, @patch.next)
-      when :prerelease
-        self.class.new(@major, @minor, @patch, @prerelease.concat([0]))
       end
     end
 

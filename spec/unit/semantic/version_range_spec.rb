@@ -143,19 +143,19 @@ describe Semantic::VersionRange do
 
     context '"reasonably close" expressions' do
       expressions = {
-        '~1' => {
+        [ '~ 1', '~1' ] => {
           :includes => [ '1.0.0-0', '1.999.999' ],
           :excludes => [ '0.999.999', '2.0.0-0' ],
         },
-        '~1.2' => {
+        [ '~ 1.2', '~1.2' ] => {
           :includes => [ '1.2.0-0', '1.2.999' ],
           :excludes => [ '1.1.999', '1.3.0-0' ],
         },
-        '~1.2.3' => {
+        [ '~ 1.2.3', '~1.2.3' ] => {
           :includes => [ '1.2.3-0', '1.2.3' ],
           :excludes => [ '1.2.2', '1.2.4-0' ],
         },
-        '~1.2.3-alpha' => {
+        [ '~ 1.2.3-alpha', '~1.2.3-alpha' ] => {
           :includes => [ '1.2.3-alpha', '1.2.3' ],
           :excludes => [ '1.2.3-alph', '1.2.4-0' ],
         },
