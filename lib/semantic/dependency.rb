@@ -7,41 +7,64 @@ module Semantic
     autoload :ModuleRelease, 'semantic/dependency/module_release'
     autoload :Source, 'semantic/dependency/source'
 
+    # @!group Sources
+
+    # @return [Array<Source>] a frozen copy of the {Source} list
     def sources
       (@sources ||= []).dup.freeze
     end
 
+    # Appends a new {Source} to the current list.
+    # @param source [Source] the {Source} to add
+    # @return [void]
     def add_source(source)
       sources
       @sources << source
+      nil
     end
 
+    # Clears the current list of {Source}s.
+    # @return [void]
     def clear_sources
       sources
       @sources.clear
+      nil
     end
+
+    # @!endgroup
 
     # Fetches a graph of modules and their dependencies from the currently
     # configured list of {Source}s.
     #
-    # @param modules [{ String => String }]
+    # @todo Return a specialized "Graph" object.
+    # @todo Allow for external constraints to be added to the graph.
     # @see #sources
     # @see #add_source
     # @see #clear_sources
+    #
+    # @param modules [{ String => String }]
+    # @return [ModuleRelease] the root of a dependency graph
     def query(modules)
-      release = Source::ROOT_CAUSE.create_release('', nil, modules)
+      graph = Source::ROOT_CAUSE.create_release('', nil, modules)
 
-      modules = fetch release
-      releases = modules.values.flatten << release
+      modules = fetch(graph)
+      releases = modules.values.flatten << graph
       releases.each do |rel|
         rel.dependencies.each do |name|
-          rel.satisfy_dependencies modules[name]
+          rel.satisfy_dependencies(modules[name])
         end
       end
 
-      return release
+      return graph
     end
 
+    # Given a graph result from {#query}, this method will resolve the graph of
+    # dependencies, if possible, into a flat list of the best suited modules. If
+    # the dependency graph does not have a suitable resolution, this method will
+    # raise an exception to that effect.
+    #
+    # @param graph [ModuleRelease] the root of a dependency graph
+    # @return [Array<ModuleRelease>] the list of releases to act on
     def resolve(graph)
       catch :next do
         return walk(graph.depends_on)
@@ -56,9 +79,11 @@ module Semantic
     # placed on it, being {ModuleRelease#satisfied? satisfied}, and having the
     # greatest version number (with stability being preferred over prereleases).
     #
-    # @param dependencies [{ String => Array(ModuleRelease) }] the dependencies
-    # @param considering [Array(ModuleRelease)] the set of releases being tested
-    # @return [Array(ModuleRelease)] the list of releases to use, if successful
+    # @todo Traversal order is not presently guaranteed.
+    #
+    # @param dependencies [{ String => Array<ModuleRelease> }] the dependencies
+    # @param considering [Array<ModuleRelease>] the set of releases being tested
+    # @return [Array<ModuleRelease>] the list of releases to use, if successful
     def walk(dependencies, *considering)
       return considering if dependencies.empty?
 
@@ -80,7 +105,7 @@ module Semantic
           # will return a completed dependency list. If there were problems
           # resolving our dependencies, we'll catch `:next`, which will cause
           # us to move to the next possibility.
-          return walk(merged, dep, *considering)
+          return walk(merged, *considering, dep)
         end
       end
 
@@ -90,7 +115,12 @@ module Semantic
       throw :next
     end
 
-    # @param module [ModuleRelease] the release to detail
+    # Given a {ModuleRelease}, this method will iterate through the current
+    # list of {Source}s to find the complete list of versions available for its
+    # dependencies.
+    #
+    # @param release [ModuleRelease] the release to fetch details for
+    # @return [{ String => [ModuleRelease] }] the fetched dependency information
     def fetch(release, cache = Hash.new { |h,k| h[k] = {} })
       release.dependencies.each do |mod|
         next if cache.key? mod
@@ -98,7 +128,7 @@ module Semantic
         sources.each do |source|
           source.fetch(mod).each do |dependency|
             releases[dependency.version] ||= dependency
-            fetch dependency, cache
+            fetch(dependency, cache)
           end
         end
       end
@@ -108,13 +138,19 @@ module Semantic
       end
     end
 
+    # Given a list of potential releases, this method returns the most suitable
+    # releases for exploration. Only {ModuleRelease#satisfied? satisfied}
+    # releases are considered, and releases with stable versions are preferred.
+    #
+    # @param releases [Array<ModuleRelease>] a list of potential releases
+    # @return [Array<ModuleRelease>] releases open for consideration
     def preferred_releases(releases)
-      stable = proc { |x| x.version.prerelease.nil? }
+      satisfied = releases.select { |x| x.satisfied? }
 
-      if releases.none?(&stable)
-        return releases.select { |r| r.satisfied? }
+      if satisfied.any? { |x| x.version.stable? }
+        return satisfied.select { |x| x.version.stable? }
       else
-        return releases.select(&stable).select { |r| r.satisfied? }
+        return satisfied
       end
     end
   end

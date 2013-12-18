@@ -60,7 +60,7 @@ module Semantic
       # end
 
       def to_s
-        "<#{name}@#{version}>"
+        "#<#{self.class} #{name}@#{version}>"
       end
     end
   end

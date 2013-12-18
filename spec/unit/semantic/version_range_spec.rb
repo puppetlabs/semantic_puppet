@@ -273,7 +273,7 @@ describe Semantic::VersionRange do
       Semantic::VersionRange.new(v(x), v(y), ex)
     end
 
-    EMPTY_RANGE = range(0, 0, true)
+    EMPTY_RANGE = Semantic::VersionRange::EMPTY_RANGE
 
     tests = {
       # This falls entirely before the target range

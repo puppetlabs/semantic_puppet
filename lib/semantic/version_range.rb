@@ -26,7 +26,7 @@ module Semantic
       def parse(range)
         partial = '\d+(?:[.]\d+)?(?:[.][xX*]|[.]\d+(?:[-][0-9a-zA-Z-]*)?)?'
 
-        range = range.sub(/([><=~])[ ]/, '\1')
+        range = range.gsub(/([><=~])[ ]/, '\1')
 
         return case range
         when /\A(#{partial})\Z/
@@ -251,9 +251,6 @@ module Semantic
       end
     end
 
-    # A range that matches no versions
-    EMPTY_RANGE = VersionRange.new(Version.parse('0.0.0'), Version.parse('0.0.0'), true).freeze
-
     # Computes the intersection of a pair of ranges. If the ranges have no
     # useful intersection, an empty range is returned.
     #
@@ -293,5 +290,10 @@ module Semantic
     def ends_before?(other)
       self.end < other.end || (self.end == other.end && self.exclude_end?)
     end
+
+    public
+
+    # A range that matches no versions
+    EMPTY_RANGE = VersionRange.new(MIN_VERSION, MIN_VERSION, true).freeze
   end
 end
