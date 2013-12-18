@@ -51,8 +51,14 @@ module Semantic
 
     private
 
+    # Iterates over a changing set of dependencies in search of the best
+    # solution available. Fitness is specified as meeting all the constraints
+    # placed on it, being {ModuleRelease#satisfied? satisfied}, and having the
+    # greatest version number (with stability being preferred over prereleases).
+    #
     # @param dependencies [{ String => Array(ModuleRelease) }] the dependencies
     # @param considering [Array(ModuleRelease)] the set of releases being tested
+    # @return [Array(ModuleRelease)] the list of releases to use, if successful
     def walk(dependencies, *considering)
       return considering if dependencies.empty?
 

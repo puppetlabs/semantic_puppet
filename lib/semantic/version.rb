@@ -18,10 +18,10 @@ module Semantic
         \Z
       /x
 
-      # Parse a semantic version string.
+      # Parse a Semantic Version string.
       #
       # @param ver [String] the version string to parse
-      # @return [Semantic::Version] a comparable Version object
+      # @return [Version] a comparable {Version} object
       def parse(ver)
         match, major, minor, patch, prerelease, build = *ver.match(LOOSE_REGEX)
 
@@ -81,7 +81,7 @@ module Semantic
       @build      = build
     end
 
-    def next(part = nil)
+    def next(part)
       case part
       when :major
         self.class.new(@major.next, 0, 0)

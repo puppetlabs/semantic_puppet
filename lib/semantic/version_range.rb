@@ -249,12 +249,6 @@ module Semantic
 
         [ version, next_version ]
       end
-
-      # The lowest precedence Version possible
-      MIN_VERSION = Version.new(0, 0, 0, []).freeze
-
-      # The highest precedence Version possible
-      MAX_VERSION = Version.new((1.0/0.0), 0, 0).freeze
     end
 
     # A range that matches no versions
@@ -284,6 +278,11 @@ module Semantic
     alias :& :intersection
 
     private
+    # The lowest precedence Version possible
+    MIN_VERSION = Version.new(0, 0, 0, []).freeze
+
+    # The highest precedence Version possible
+    MAX_VERSION = Version.new((1.0/0.0), 0, 0).freeze
 
     # Determines whether this {VersionRange} has an earlier endpoint than the
     # give `other` range.
