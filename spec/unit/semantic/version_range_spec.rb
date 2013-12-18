@@ -132,7 +132,7 @@ describe Semantic::VersionRange do
         },
         [ '<=1.2.3-alpha', '<= 1.2.3-alpha' ] => {
           :includes => [ '0.0.0-0', '1.2.3-alpha' ],
-          :excludes => [ '1.2.3-alpha0', '1.2.3-alpha.0' ],
+          :excludes => [ '1.2.3-alpha0', '1.2.3-alpha.0', '1.2.3-alpha'.next ],
         },
       }
 
@@ -241,5 +241,115 @@ describe Semantic::VersionRange do
         test_range(range, vs[:includes], vs[:excludes])
       end
     end
+
+    context 'unioned expressions' do
+      expressions = {
+        [ '1.2 <1.2.5' ] => {
+          :includes => [ '1.2.0-0', '1.2.4' ],
+          :excludes => [ '1.1.999', '1.2.5-0', '1.9.0' ],
+        },
+        [ '1 <=1.2.5' ] => {
+          :includes => [ '1.0.0-0', '1.2.5' ],
+          :excludes => [ '0.999.999', '1.2.6-0', '1.9.0' ],
+        },
+        [ '>1 >2 >=3 <=4' ] => {
+          :includes => [ '3.0.0-0', '4.999.999' ],
+          :excludes => [ '2.999.999', '5.0.0-0' ],
+        },
+      }
+
+      expressions.each do |range, vs|
+        test_range(range, vs[:includes], vs[:excludes])
+      end
+    end
   end
+
+  describe '#intersection' do
+    def self.v(num)
+      Semantic::Version.parse("#{num}.0.0")
+    end
+
+    def self.range(x, y, ex = false)
+      Semantic::VersionRange.new(v(x), v(y), ex)
+    end
+
+    EMPTY_RANGE = range(0, 0, true)
+
+    tests = {
+      # This falls entirely before the target range
+      range(1, 4) => [ EMPTY_RANGE ],
+
+      # This falls entirely after the target range
+      range(11, 15) => [ EMPTY_RANGE ],
+
+      # This overlaps the beginning of the target range
+      range(1, 6) => [ range(5, 6) ],
+
+      # This overlaps the end of the target range
+      range(9, 15) => [ range(9, 10), range(9, 10, true) ],
+
+      # This shares the first value of the target range
+      range(1, 5) => [ range(5, 5) ],
+
+      # This shares the last value of the target range
+      range(10, 15)  => [ range(10, 10), EMPTY_RANGE ],
+
+      # This shares both values with the target range
+      range(5, 10) => [ range(5, 10), range(5, 10, true) ],
+
+      # This is a superset of the target range
+      range(4, 11) => [ range(5, 10), range(5, 10, true) ],
+
+      # This is a subset of the target range
+      range(6, 9) => [ range(6, 9) ],
+
+      # This shares the first value of the target range, but excludes it
+      range(1, 5, true)   => [ EMPTY_RANGE ],
+
+      # This overlaps the beginning of the target range, with an excluded end
+      range(1, 7, true)   => [ range(5, 7, true) ],
+
+      # This shares both values with the target range, and excludes the end
+      range(5, 10, true)  => [ range(5, 10, true) ],
+    }
+
+    inclusive = range(5, 10)
+    context "between #{inclusive} &" do
+      tests.each do |subject, result|
+        result = result.first
+
+        example subject do
+          expect(inclusive & subject).to eql(result)
+        end
+      end
+    end
+
+    exclusive = range(5, 10, true)
+    context "between #{exclusive} &" do
+      tests.each do |subject, result|
+        result = result.last
+
+        example subject do
+          expect(exclusive & subject).to eql(result)
+        end
+      end
+    end
+
+    context 'is commutative' do
+      tests.each do |subject, _|
+        example "between #{inclusive} & #{subject}" do
+          expect(inclusive & subject).to eql(subject & inclusive)
+        end
+        example "between #{exclusive} & #{subject}" do
+          expect(exclusive & subject).to eql(subject & exclusive)
+        end
+      end
+    end
+
+    it 'cannot intersect with non-VersionRanges' do
+      msg = "value must be a Semantic::VersionRange"
+      expect { inclusive.intersection(1..2) }.to raise_error(msg)
+    end
+  end
+
 end

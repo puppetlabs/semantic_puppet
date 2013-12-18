@@ -91,17 +91,16 @@ module Semantic
         self.class.new(@major, @minor, @patch.next)
       when :prerelease
         self.class.new(@major, @minor, @patch, @prerelease.concat([0]))
-      when :stable
-        if @prerelease
-          self.class.new(@major, @minor, @patch)
-        else
-          self.next(:patch)
-        end
       end
     end
 
     def prerelease
       @prerelease && @prerelease.join('.')
+    end
+
+    # @return [Boolean] true if this is a stable release
+    def stable?
+      @prerelease.nil?
     end
 
     def build
