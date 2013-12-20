@@ -21,12 +21,12 @@ module Semantic
       # * Range Intersections
       #   * ex. `">1.0.0 <=2.3"`
       #
-      # @param range [String] the version range string to parse
+      # @param range_str [String] the version range string to parse
       # @return [VersionRange] a new {VersionRange} instance
-      def parse(range)
+      def parse(range_str)
         partial = '\d+(?:[.]\d+)?(?:[.][xX*]|[.]\d+(?:[-][0-9a-zA-Z-]*)?)?'
 
-        range = range.gsub(/([><=~])[ ]/, '\1')
+        range = range_str.gsub(/([><=~])[ ]/, '\1')
 
         return case range
         when /\A(#{partial})\Z/
@@ -39,6 +39,8 @@ module Semantic
           parse_inclusive_range_expression($1, $2)
         when / /
           range.split(' ').map { |part| parse(part) }.inject { |a,b| a & b }
+        else
+          raise ArgumentError, "Unparsable version range: #{range_str.inspect}"
         end
       end
 

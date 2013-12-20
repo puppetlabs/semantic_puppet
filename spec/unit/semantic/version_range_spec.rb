@@ -262,6 +262,13 @@ describe Semantic::VersionRange do
         test_range(range, vs[:includes], vs[:excludes])
       end
     end
+
+    context 'invalid expressions' do
+      example 'raise an appropriate exception' do
+        ex = [ ArgumentError, 'Unparsable version range: "invalid"' ]
+        expect { Semantic::VersionRange.parse('invalid') }.to raise_error(*ex)
+      end
+    end
   end
 
   describe '#intersection' do
