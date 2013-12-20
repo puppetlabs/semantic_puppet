@@ -22,39 +22,25 @@ describe Semantic::VersionRange do
       end
     end
 
-    context 'single version expressions' do
+    context 'loose version expressions' do
       expressions = {
-        '1.2.3' => {
-          :includes => [ '1.2.3-alpha', '1.2.3' ],
-          :excludes => [ '1.2.2', '1.2.4-alpha' ],
-        },
-        '1.2.3-alpha' => {
+        [ '1.2.3-alpha', '=1.2.3-alpha', '= 1.2.3-alpha' ] => {
           :includes => [ '1.2.3-alpha'  ],
           :excludes => [ '1.2.3-999', '1.2.3-beta' ],
         },
-      }
-
-      expressions.each do |range, vs|
-        test_range(range, vs[:includes], vs[:excludes])
-      end
-    end
-
-    context 'major.minor expressions' do
-      expressions = {
-        [ '1.2', '1.2.x', '1.2.X', '1.2.*' ] => {
+        [ '1.2.3', '=1.2.3', '= 1.2.3' ] => {
+          :includes => [ '1.2.3-alpha', '1.2.3' ],
+          :excludes => [ '1.2.2', '1.2.4-alpha' ],
+        },
+        [ '1.2', '1.2.x', '1.2.X', '1.2.*' ] +
+        [ '=1.2', '=1.2.x', '=1.2.X', '=1.2.*' ] +
+        [ '= 1.2', '= 1.2.x', '= 1.2.X', '= 1.2.*' ] => {
           :includes => [ '1.2.0-alpha', '1.2.0', '1.2.999' ],
           :excludes => [ '1.1.999', '1.3.0-0' ],
         },
-      }
-
-      expressions.each do |range, vs|
-        test_range(range, vs[:includes], vs[:excludes])
-      end
-    end
-
-    context 'major-only expressions' do
-      expressions = {
-        [ '1', '1.x', '1.X', '1.*' ] => {
+        [ '1', '1.x', '1.X', '1.*' ] +
+        [ '=1', '=1.x', '=1.X', '=1.*' ] +
+        [ '= 1', '= 1.x', '= 1.X', '= 1.*' ] => {
           :includes => [ '1.0.0-alpha', '1.999.0' ],
           :excludes => [ '0.999.999', '2.0.0-0' ],
         },

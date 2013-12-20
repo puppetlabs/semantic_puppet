@@ -29,7 +29,7 @@ module Semantic
         range = range_str.gsub(/([><=~])[ ]/, '\1')
 
         return case range
-        when /\A(#{partial})\Z/
+        when /\A[=]?(#{partial})\Z/
           parse_loose_version_expression($1)
         when /\A([><][=]?)(#{partial})\Z/
           parse_inequality_expression($1, $2)
