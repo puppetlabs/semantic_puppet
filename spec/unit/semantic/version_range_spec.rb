@@ -6,16 +6,16 @@ describe Semantic::VersionRange do
   describe '.parse' do
     def self.test_range(range_list, includes, excludes)
       Array(range_list).each do |expr|
-        range = Semantic::VersionRange.parse(expr)
-
         includes.each do |vstring|
           example "#{expr.inspect} includes #{vstring}" do
+            range = Semantic::VersionRange.parse(expr)
             expect(range).to include(Semantic::Version.parse(vstring))
           end
         end
 
         excludes.each do |vstring|
           example "#{expr.inspect} excludes #{vstring}" do
+            range = Semantic::VersionRange.parse(expr)
             expect(range).to_not include(Semantic::Version.parse(vstring))
           end
         end
