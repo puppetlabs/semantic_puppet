@@ -4,8 +4,10 @@ module Semantic
   module Dependency
     extend self
 
+    autoload :Graph,         'semantic/dependency/graph'
+    autoload :GraphNode,     'semantic/dependency/graph_node'
     autoload :ModuleRelease, 'semantic/dependency/module_release'
-    autoload :Source, 'semantic/dependency/source'
+    autoload :Source,        'semantic/dependency/source'
 
     # @!group Sources
 
@@ -43,18 +45,12 @@ module Semantic
     # @see #clear_sources
     #
     # @param modules [{ String => String }]
-    # @return [ModuleRelease] the root of a dependency graph
+    # @return [Graph] the root of a dependency graph
     def query(modules)
-      graph = Source::ROOT_CAUSE.create_release('', nil, modules)
+      constraints = Hash[modules.map { |k, v| [ k, VersionRange.parse(v) ] }]
 
-      modules = fetch(graph)
-      releases = modules.values.flatten << graph
-      releases.each do |rel|
-        rel.dependencies.each do |name|
-          rel.satisfy_dependencies(modules[name])
-        end
-      end
-
+      graph = Graph.new(constraints)
+      fetch_dependencies(graph)
       return graph
     end
 
@@ -63,11 +59,11 @@ module Semantic
     # the dependency graph does not have a suitable resolution, this method will
     # raise an exception to that effect.
     #
-    # @param graph [ModuleRelease] the root of a dependency graph
+    # @param graph [Graph] the root of a dependency graph
     # @return [Array<ModuleRelease>] the list of releases to act on
     def resolve(graph)
       catch :next do
-        return walk(graph.depends_on)
+        return walk(graph.dependencies)
       end
       raise Exception
     end
@@ -82,8 +78,8 @@ module Semantic
     # @todo Traversal order is not presently guaranteed.
     #
     # @param dependencies [{ String => Array<ModuleRelease> }] the dependencies
-    # @param considering [Array<ModuleRelease>] the set of releases being tested
-    # @return [Array<ModuleRelease>] the list of releases to use, if successful
+    # @param considering [Array<GraphNode>] the set of releases being tested
+    # @return [Array<GraphNode>] the list of releases to use, if successful
     def walk(dependencies, *considering)
       return considering if dependencies.empty?
 
@@ -99,7 +95,7 @@ module Semantic
           # After adding any new dependencies and imposing our own constraints
           # on existing dependencies, we'll mark ourselves as "under
           # consideration" and recurse.
-          merged = dependencies.merge(dep.depends_on) { |_,a,b| a & b }
+          merged = dependencies.merge(dep.dependencies) { |_,a,b| a & b }
 
           # If all subsequent dependencies resolved well, the recursive call
           # will return a completed dependency list. If there were problems
@@ -119,22 +115,21 @@ module Semantic
     # list of {Source}s to find the complete list of versions available for its
     # dependencies.
     #
-    # @param release [ModuleRelease] the release to fetch details for
-    # @return [{ String => [ModuleRelease] }] the fetched dependency information
-    def fetch(release, cache = Hash.new { |h,k| h[k] = {} })
-      release.dependencies.each do |mod|
-        next if cache.key? mod
-        releases = cache[mod]
-        sources.each do |source|
-          source.fetch(mod).each do |dependency|
-            releases[dependency.version] ||= dependency
-            fetch(dependency, cache)
+    # @param node [GraphNode] the node to fetch details for
+    # @return [void]
+    def fetch_dependencies(node, cache = Hash.new { |h,k| h[k] = {} })
+      node.dependency_names.each do |name|
+        unless cache.key? name
+          releases = cache[name]
+          sources.each do |source|
+            source.fetch(name).each do |dependency|
+              releases[dependency.version] ||= dependency
+              fetch_dependencies(dependency, cache)
+            end
           end
         end
-      end
 
-      return cache.inject({}) do |hash, (key, value)|
-        hash[key] = value.values; hash
+        node << cache[name].values
       end
     end
 

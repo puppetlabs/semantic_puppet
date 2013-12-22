@@ -80,7 +80,7 @@ describe Semantic::Dependency do
         source.stub(:fetch).and_return([])
 
         result = Semantic::Dependency.query('foo' => '1.0.0', 'bar' => '1.0.0')
-        expect(result.dependencies).to match_array %w[ foo bar ]
+        expect(result.dependency_names).to match_array %w[ foo bar ]
       end
 
       it 'populates the returned ModuleRelease with releated dependencies' do
@@ -90,7 +90,8 @@ describe Semantic::Dependency do
         )
 
         result = Semantic::Dependency.query('foo' => '1.0.0', 'bar' => '1.0.0')
-        expect(result.depends_on).to eql 'foo' => [ foo ], 'bar' => [ bar ]
+        expect(result.dependencies).to eql 'foo' => SortedSet.new([ foo ]),
+                                           'bar' => SortedSet.new([ bar ])
       end
 
       it 'populates all returned ModuleReleases with releated dependencies' do
@@ -101,9 +102,9 @@ describe Semantic::Dependency do
         )
 
         result = Semantic::Dependency.query('foo' => '1.0.0')
-        expect(result.depends_on).to eql 'foo' => [ foo ]
-        expect(foo.depends_on).to eql 'bar' => [ bar ]
-        expect(bar.depends_on).to eql 'baz' => [ baz ]
+        expect(result.dependencies).to eql 'foo' => SortedSet.new([ foo ])
+        expect(foo.dependencies).to eql 'bar' => SortedSet.new([ bar ])
+        expect(bar.dependencies).to eql 'baz' => SortedSet.new([ baz ])
       end
     end
 
