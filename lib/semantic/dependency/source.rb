@@ -12,9 +12,6 @@ module Semantic
         end
         ModuleRelease.new(self, name, version, dependencies)
       end
-
-      private
-      ROOT_CAUSE = Source.new()
     end
   end
 end
