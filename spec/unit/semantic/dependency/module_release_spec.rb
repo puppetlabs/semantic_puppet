@@ -2,8 +2,12 @@ require 'spec_helper'
 require 'semantic/dependency/module_release'
 
 describe Semantic::Dependency::ModuleRelease do
+  def source
+    @source ||= Semantic::Dependency::Source.new
+  end
+
   def make_release(name, version, deps = {})
-    Semantic::Dependency::Source::ROOT_CAUSE.create_release(name, version, deps)
+    source.create_release(name, version, deps)
   end
 
   let(:no_dependencies) do
@@ -19,31 +23,51 @@ describe Semantic::Dependency::ModuleRelease do
     make_release('module', '1.2.3', dependencies)
   end
 
-  describe '#dependencies' do
+  describe '#dependency_names' do
 
     it "lists the names of all the release's dependencies" do
-      expect(no_dependencies.dependencies).to    match_array %w[ ]
-      expect(one_dependency.dependencies).to     match_array %w[ foo ]
-      expect(three_dependencies.dependencies).to match_array %w[ foo bar baz ]
+      expect(no_dependencies.dependency_names).to    match_array %w[]
+      expect(one_dependency.dependency_names).to     match_array %w[foo]
+      expect(three_dependencies.dependency_names).to match_array %w[foo bar baz]
     end
 
   end
 
-  describe '#satisfy_dependencies' do
+  describe '#<<' do
 
     it 'marks matching dependencies as satisfied' do
-      one_dependency.satisfy_dependencies make_release('foo', '1.0.0')
+      one_dependency << make_release('foo', '1.0.0')
       expect(one_dependency).to be_satisfied
     end
 
     it 'does not mark mis-matching dependency names as satisfied' do
-      one_dependency.satisfy_dependencies make_release('WAT', '1.0.0')
+      one_dependency << make_release('WAT', '1.0.0')
       expect(one_dependency).to_not be_satisfied
     end
 
     it 'does not mark mis-matching dependency versions as satisfied' do
-      one_dependency.satisfy_dependencies make_release('foo', '0.0.1')
+      one_dependency << make_release('foo', '0.0.1')
       expect(one_dependency).to_not be_satisfied
+    end
+
+  end
+
+  describe '#<=>' do
+
+    it 'considers releases with greater version numbers greater' do
+      expect(make_release('foo', '1.0.0')).to be > make_release('foo', '0.1.0')
+    end
+
+    it 'considers releases with lesser version numbers lesser' do
+      expect(make_release('foo', '0.1.0')).to be < make_release('foo', '1.0.0')
+    end
+
+    it 'orders releases with different names lexographically' do
+      expect(make_release('bar', '1.0.0')).to be < make_release('foo', '1.0.0')
+    end
+
+    it 'orders releases by name first' do
+      expect(make_release('bar', '2.0.0')).to be < make_release('foo', '1.0.0')
     end
 
   end
@@ -60,23 +84,47 @@ describe Semantic::Dependency::ModuleRelease do
 
     it 'returns false when not all dependencies have been satisified' do
       releases = %w[ 0.9.0 1.0.0 1.0.1 ].map { |ver| make_release('foo', ver) }
-      three_dependencies.satisfy_dependencies releases
+      three_dependencies << releases
 
       expect(three_dependencies).to_not be_satisfied
     end
 
     it 'returns false when not all dependency versions have been satisified' do
       releases = %w[ 0.9.0 1.0.1 ].map { |ver| make_release('foo', ver) }
-      one_dependency.satisfy_dependencies releases
+      one_dependency << releases
 
       expect(one_dependency).to_not be_satisfied
     end
 
     it 'returns true when all dependencies have been satisified' do
       releases = %w[ 0.9.0 1.0.0 1.0.1 ].map { |ver| make_release('foo', ver) }
-      one_dependency.satisfy_dependencies releases
+      one_dependency << releases
 
       expect(one_dependency).to be_satisfied
+    end
+
+  end
+
+  describe '#satisfied_by?' do
+
+    it 'returns false when there are no dependencies to satisfy' do
+      release = make_release('foo', '1.0.0')
+      expect(no_dependencies).to_not be_satisfied_by release
+    end
+
+    it 'returns false when the release does not match the dependency name' do
+      release = make_release('bar', '1.0.0')
+      expect(one_dependency).to_not be_satisfied_by release
+    end
+
+    it 'returns false when the release does not match the dependency version' do
+      release = make_release('foo', '4.0.0')
+      expect(one_dependency).to_not be_satisfied_by release
+    end
+
+    it 'returns true when the release matches the dependency' do
+      release = make_release('foo', '1.0.0')
+      expect(one_dependency).to be_satisfied_by release
     end
 
   end
