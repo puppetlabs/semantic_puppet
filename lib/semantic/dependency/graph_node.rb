@@ -36,10 +36,22 @@ module Semantic
         end
       end
 
+      # @api internal
+      # @return [{ String => SortedSet<GraphNode> }] the satisfactory
+      #         dependency nodes
       def dependencies
         @_dependencies ||= Hash.new { |h, k| h[k] = SortedSet.new }
       end
 
+      # Adds the given dependency name to the list of dependencies.
+      #
+      # @param name [String] the dependency name
+      # @return [void]
+      def add_dependency(name)
+        dependencies[name]
+      end
+
+      # @return [Array<String>] the list of dependency names
       def dependency_names
         dependencies.keys
       end
@@ -51,6 +63,8 @@ module Semantic
             dependencies[node.name] << node
           end
         end
+
+        return self
       end
 
       def <=>(other)

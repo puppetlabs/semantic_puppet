@@ -19,8 +19,7 @@ module Semantic
         @version     = version.freeze
         @constraints = constraints.freeze
 
-        # Pre-fill the list of dependency names
-        constraints.keys.each { |key| dependencies[key] }
+        constraints.keys.each { |key| add_dependency(key) }
       end
 
       def satisfied_by?(node)

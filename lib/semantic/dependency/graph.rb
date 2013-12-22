@@ -17,9 +17,7 @@ module Semantic
 
         modules.each do |key, range|
           add_constraint('initialize', key) { |node| range === node.version }
-
-          # Pre-fill the list of dependency names
-          dependencies[key]
+          add_dependency(key)
         end
       end
 

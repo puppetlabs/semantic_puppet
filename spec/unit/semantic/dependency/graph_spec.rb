@@ -8,7 +8,7 @@ describe Semantic::Dependency::Graph do
   Version       = Semantic::Version
   VersionRange  = Semantic::VersionRange
 
-  context '#initialize' do
+  describe '#initialize' do
     it 'can be called without arguments' do
       expect { Graph.new }.to_not raise_error
     end
@@ -28,7 +28,7 @@ describe Semantic::Dependency::Graph do
     end
   end
 
-  context '#add_constraint' do
+  describe '#add_constraint' do
     let(:graph) { Graph.new }
 
     it 'can create a new constraint on a module' do
@@ -48,7 +48,7 @@ describe Semantic::Dependency::Graph do
     end
   end
 
-  context '#satisfied_by?' do
+  describe '#satisfied_by?' do
     it 'is not satisfied by modules it does not depend on' do
       graph = Graph.new('foo' => VersionRange.parse('1.x'))
       release = ModuleRelease.new(nil, 'bar', Version.parse('1.0.0'))
