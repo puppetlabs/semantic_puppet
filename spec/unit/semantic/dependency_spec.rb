@@ -151,7 +151,9 @@ describe Semantic::Dependency do
     end
 
     def subject(specs)
-      result = Semantic::Dependency.resolve(Semantic::Dependency.query(specs))
+      graph = Semantic::Dependency.query(specs)
+      yield graph if block_given?
+      result = Semantic::Dependency.resolve(graph)
       result.map { |rel| [ rel.name, rel.version.to_s ] }
     end
 
@@ -290,6 +292,41 @@ describe Semantic::Dependency do
 
           with_message = /Cannot resolve foo 1.1.0/
           expect { foo('1.1.0') }.to raise_exception with_message
+        end
+      end
+    end
+
+    context 'for a module with dependencies that violate graph constraints' do
+      def foo(range)
+        subject('foo' => range) do |graph|
+          graph.add_graph_constraint('uniqueness') do |nodes|
+            nodes.none? { |node| node.name =~ /z/ }
+          end
+        end
+      end
+
+      context 'that can be resolved' do
+        it 'terminates' do
+          add_source_modules('foo', '1.1.0', 'bar' => '1.x')
+          add_source_modules('foo', '1.2.0', 'bar' => '2.x')
+          add_source_modules('bar', '1.0.0')
+          add_source_modules('bar', '2.0.0', 'baz' => '1.0.0')
+          add_source_modules('baz', '1.0.0')
+
+          expect(foo('1.x')).to include %w[ foo 1.1.0 ], %w[ bar 1.0.0 ]
+        end
+      end
+
+      context 'that cannot be resolved' do
+        xit 'fails with an appropriate message' do
+          add_source_modules('foo', '1.1.0', 'bar' => '1.x')
+          add_source_modules('foo', '1.2.0', 'bar' => '2.x')
+          add_source_modules('bar', '1.0.0', 'baz' => '1.0.0')
+          add_source_modules('bar', '2.0.0', 'baz' => '1.0.0')
+          add_source_modules('baz', '1.0.0')
+
+          with_message = /Cannot resolve foo 1.x/
+          expect { foo('1.x') }.to raise_exception with_message
         end
       end
     end

@@ -63,7 +63,7 @@ module Semantic
     # @return [Array<ModuleRelease>] the list of releases to act on
     def resolve(graph)
       catch :next do
-        return walk(graph.dependencies)
+        return walk(graph, graph.dependencies)
       end
       raise Exception
     end
@@ -77,20 +77,29 @@ module Semantic
     #
     # @todo Traversal order is not presently guaranteed.
     #
+    # @param graph [Graph] the root of a dependency graph
     # @param dependencies [{ String => Array<ModuleRelease> }] the dependencies
     # @param considering [Array<GraphNode>] the set of releases being tested
     # @return [Array<GraphNode>] the list of releases to use, if successful
-    def walk(dependencies, *considering)
+    def walk(graph, dependencies, *considering)
       return considering if dependencies.empty?
 
       # Selecting a dependency from the collection...
       name, deps = dependencies.shift
 
       # ... (and stepping over it if we've seen it before) ...
-      return walk(dependencies, *considering) unless (deps & considering).empty?
+      unless (deps & considering).empty?
+        return walk(graph, dependencies, *considering)
+      end
 
       # ... we'll iterate through the list of possible versions in order.
       preferred_releases(deps).reverse_each do |dep|
+
+        # We should skip over any releases that violate graph-level constraints.
+        unless graph.considering_solution? [ dep, *considering ]
+          next
+        end
+
         catch :next do
           # After adding any new dependencies and imposing our own constraints
           # on existing dependencies, we'll mark ourselves as "under
@@ -101,7 +110,7 @@ module Semantic
           # will return a completed dependency list. If there were problems
           # resolving our dependencies, we'll catch `:next`, which will cause
           # us to move to the next possibility.
-          return walk(merged, *considering, dep)
+          return walk(graph, merged, *considering, dep)
         end
       end
 

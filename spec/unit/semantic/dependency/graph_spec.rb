@@ -82,4 +82,77 @@ describe Semantic::Dependency::Graph do
     end
   end
 
+  describe '#add_graph_constraint' do
+    let(:graph) { Graph.new }
+
+    it 'can create a new constraint on a graph' do
+      expect(graph.constraints.keys).to be_empty
+
+      graph.add_graph_constraint('test') { }
+      expect(graph.constraints.keys).to match_array [ :graph ]
+    end
+
+    it 'permits multiple graph constraints' do
+      expect(graph.constraints.keys).to be_empty
+
+      graph.add_graph_constraint('test') { }
+      graph.add_graph_constraint('test') { }
+
+      expect(graph.constraints.keys).to match_array [ :graph ]
+    end
+  end
+
+  describe '#valid_solution?' do
+    it 'returns false if the solution violates a graph constraint' do
+      graph = Graph.new
+      graph.add_graph_constraint('me') do |nodes|
+        nodes.none? { |node| node.name =~ /z/ }
+      end
+
+      releases = [
+        double('Node', :name => 'foo'),
+        double('Node', :name => 'bar'),
+        double('Node', :name => 'baz'),
+      ]
+
+      expect(graph).to_not be_considering_solution releases
+    end
+
+    it 'returns false if the solution violates any graph constraint' do
+      graph = Graph.new
+      graph.add_graph_constraint('me') do |nodes|
+        nodes.all? { |node| node.name.length < 5 }
+      end
+      graph.add_graph_constraint('me') do |nodes|
+        nodes.none? { |node| node.name =~ /z/ }
+      end
+
+      releases = [
+        double('Node', :name => 'foo'),
+        double('Node', :name => 'bar'),
+        double('Node', :name => 'bangerang'),
+      ]
+
+      expect(graph).to_not be_considering_solution releases
+    end
+
+    it 'returns true if the solution violates no graph constraints' do
+      graph = Graph.new
+      graph.add_graph_constraint('me') do |nodes|
+        nodes.all? { |node| node.name.length < 5 }
+      end
+      graph.add_graph_constraint('me') do |nodes|
+        nodes.none? { |node| node.name =~ /z/ }
+      end
+
+      releases = [
+        double('Node', :name => 'foo'),
+        double('Node', :name => 'bar'),
+        double('Node', :name => 'boom'),
+      ]
+
+      expect(graph).to be_considering_solution releases
+    end
+  end
+
 end
