@@ -9,6 +9,8 @@ module Semantic
     autoload :ModuleRelease, 'semantic/dependency/module_release'
     autoload :Source,        'semantic/dependency/source'
 
+    autoload :UnsatisfiableGraph, 'semantic/dependency/unsatisfiable_graph'
+
     # @!group Sources
 
     # @return [Array<Source>] a frozen copy of the {Source} list
@@ -65,7 +67,7 @@ module Semantic
       catch :next do
         return walk(graph, graph.dependencies)
       end
-      raise Exception
+      raise UnsatisfiableGraph.new(graph)
     end
 
     private

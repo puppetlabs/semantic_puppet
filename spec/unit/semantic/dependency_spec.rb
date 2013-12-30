@@ -191,11 +191,12 @@ describe Semantic::Dependency do
       end
 
       context 'when the query omits all versions' do
-        xit 'fails with an appropriate message' do
+        it 'fails with an appropriate message' do
           add_source_modules('foo', %w[ 1.0.0 1.1.0-a 1.1.0 ])
 
-          with_message = /Cannot resolve foo 2.x/
+          with_message = /Could not find satisfying releases/
           expect { foo('2.x') }.to raise_exception with_message
+          expect { foo('2.x') }.to raise_exception /\bfoo\b/
         end
       end
     end
@@ -233,12 +234,13 @@ describe Semantic::Dependency do
       end
 
       context 'when the dependency cannot be satisfied' do
-        xit 'fails with an appropriate message' do
+        it 'fails with an appropriate message' do
           add_source_modules('foo', %w[ 1.1.0 ], 'bar' => '1.x')
           add_source_modules('bar', %w[ 0.0.1 0.1.0-a 0.1.0 ])
 
-          with_message = /Cannot resolve foo 1.1.0/
+          with_message = /Could not find satisfying releases/
           expect { foo('1.1.0') }.to raise_exception with_message
+          expect { foo('1.1.0') }.to raise_exception /\bfoo\b/
         end
       end
     end
@@ -261,14 +263,15 @@ describe Semantic::Dependency do
       end
 
       context 'that do not overlap' do
-        xit 'fails with an appropriate message' do
+        it 'fails with an appropriate message' do
           add_source_modules('foo','1.1.0', 'bar' => '1.0.0', 'baz' => '1.0.0')
           add_source_modules('bar','1.0.0', 'quxx' => '1.x')
           add_source_modules('baz','1.0.0', 'quxx' => '2.x')
           add_source_modules('quxx', %w[ 0.9.0 1.0.0 1.1.0 1.1.1 1.2.0 2.0.0 ])
 
-          with_message = /Cannot resolve foo 1.1.0/
+          with_message = /Could not find satisfying releases/
           expect { foo('1.1.0') }.to raise_exception with_message
+          expect { foo('1.1.0') }.to raise_exception /\bfoo\b/
         end
       end
     end
@@ -287,11 +290,12 @@ describe Semantic::Dependency do
       end
 
       context 'that cannot be resolved' do
-        xit 'fails with an appropriate message' do
+        it 'fails with an appropriate message' do
           add_source_modules('foo', '1.1.0', 'foo' => '1.0.0')
 
-          with_message = /Cannot resolve foo 1.1.0/
+          with_message = /Could not find satisfying releases/
           expect { foo('1.1.0') }.to raise_exception with_message
+          expect { foo('1.1.0') }.to raise_exception /\bfoo\b/
         end
       end
     end
@@ -318,15 +322,16 @@ describe Semantic::Dependency do
       end
 
       context 'that cannot be resolved' do
-        xit 'fails with an appropriate message' do
+        it 'fails with an appropriate message' do
           add_source_modules('foo', '1.1.0', 'bar' => '1.x')
           add_source_modules('foo', '1.2.0', 'bar' => '2.x')
           add_source_modules('bar', '1.0.0', 'baz' => '1.0.0')
           add_source_modules('bar', '2.0.0', 'baz' => '1.0.0')
           add_source_modules('baz', '1.0.0')
 
-          with_message = /Cannot resolve foo 1.x/
-          expect { foo('1.x') }.to raise_exception with_message
+          with_message = /Could not find satisfying releases/
+          expect { foo('1.1.0') }.to raise_exception with_message
+          expect { foo('1.1.0') }.to raise_exception /\bfoo\b/
         end
       end
     end

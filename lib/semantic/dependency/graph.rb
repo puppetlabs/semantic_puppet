@@ -15,9 +15,24 @@ module Semantic
         @modules     = modules.keys
         @constraints = Hash.new { |h, k| h[k] = [] }
 
-        modules.each do |key, range|
-          add_constraint('initialize', key) { |node| range === node.version }
-          add_dependency(key)
+        modules.each do |name, range|
+          add_constraint('initialize', name, range.to_s) do |node|
+            range === node.version
+          end
+
+          add_dependency(name)
+        end
+      end
+
+      def constraints_for(mod)
+        return [] unless @constraints.has_key?(mod)
+
+        @constraints[mod].map do |constraint|
+          {
+            :source      => constraint[0],
+            :description => constraint[1],
+            :test        => constraint[2],
+          }
         end
       end
 
@@ -25,20 +40,21 @@ module Semantic
       # given block.
       #
       # @example Version-locking currently installed modules
-      #     installed_modules.each do |mod|
-      #       @graph.add_constraint('installed', mod.name) do |node|
-      #         mod.version == node.version
+      #     installed_modules.each do |m|
+      #       @graph.add_constraint('installed', m.name, m.version) do |node|
+      #         m.version == node.version
       #       end
       #     end
       #
       # @param source [String, Symbol] a name describing the source of the
       #               constraint
       # @param mod [String] the name of the module
+      # @param desc [String] a description of the enforced constraint
       # @yieldparam node [GraphNode] the node to test the constraint against
       # @yieldreturn [Boolean] whether the node passed the constraint
       # @return [void]
-      def add_constraint(source, mod, &block)
-        @constraints["#{mod}"] << [ source, block ]
+      def add_constraint(source, mod, desc, &block)
+        @constraints["#{mod}"] << [ source, desc, block ]
       end
 
       # Constrains graph solutions based on the given block.  Graph constraints
@@ -76,7 +92,7 @@ module Semantic
 
       def satisfied_by?(node)
         if dependencies.key? node.name
-          @constraints["#{node.name}"].all? { |_, check| check[node] }
+          constraints_for("#{node.name}").all? { |x| x[:test][node] }
         else
           false
         end

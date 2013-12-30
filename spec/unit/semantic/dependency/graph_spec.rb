@@ -34,15 +34,15 @@ describe Semantic::Dependency::Graph do
     it 'can create a new constraint on a module' do
       expect(graph.constraints.keys).to be_empty
 
-      graph.add_constraint('test', 'module-name') { }
+      graph.add_constraint('test', 'module-name', 'nil') { }
       expect(graph.constraints.keys).to match_array %w[ module-name ]
     end
 
     it 'permits multiple constraints against the same module name' do
       expect(graph.constraints.keys).to be_empty
 
-      graph.add_constraint('test', 'module-name') { }
-      graph.add_constraint('test', 'module-name') { }
+      graph.add_constraint('test', 'module-name', 'nil') { }
+      graph.add_constraint('test', 'module-name', 'nil') { }
 
       expect(graph.constraints.keys).to match_array %w[ module-name ]
     end
@@ -65,7 +65,9 @@ describe Semantic::Dependency::Graph do
 
     it 'is not satisfied by modules that do not fulfill all the constraints' do
       graph = Graph.new('foo' => VersionRange.parse('1.x'))
-      graph.add_constraint('me', 'foo') { |node| node.version.to_s == '1.2.3' }
+      graph.add_constraint('me', 'foo', '1.2.3') do |node|
+        node.version.to_s == '1.2.3'
+      end
 
       release = ModuleRelease.new(nil, 'foo', Version.parse('1.2.1'))
 
@@ -74,7 +76,9 @@ describe Semantic::Dependency::Graph do
 
     it 'is satisfied by modules that do fulfill all the constraints' do
       graph = Graph.new('foo' => VersionRange.parse('1.x'))
-      graph.add_constraint('me', 'foo') { |node| node.version.to_s == '1.2.3' }
+      graph.add_constraint('me', 'foo', '1.2.3') do |node|
+        node.version.to_s == '1.2.3'
+      end
 
       release = ModuleRelease.new(nil, 'foo', Version.parse('1.2.3'))
 
