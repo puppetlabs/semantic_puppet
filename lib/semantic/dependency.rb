@@ -70,6 +70,22 @@ module Semantic
       raise UnsatisfiableGraph.new(graph)
     end
 
+    # Fetches all available releases for the given module name.
+    #
+    # @param name [String] the module name to find releases for
+    # @return [Array<ModuleRelease>] the available releases
+    def fetch_releases(name)
+      releases = {}
+
+      sources.each do |source|
+        source.fetch(name).each do |dependency|
+          releases[dependency.version] ||= dependency
+        end
+      end
+
+      return releases.values
+    end
+
     private
 
     # Iterates over a changing set of dependencies in search of the best
@@ -128,19 +144,14 @@ module Semantic
     #
     # @param node [GraphNode] the node to fetch details for
     # @return [void]
-    def fetch_dependencies(node, cache = Hash.new { |h,k| h[k] = {} })
+    def fetch_dependencies(node, cache = {})
       node.dependency_names.each do |name|
-        unless cache.key? name
-          releases = cache[name]
-          sources.each do |source|
-            source.fetch(name).each do |dependency|
-              releases[dependency.version] ||= dependency
-              fetch_dependencies(dependency, cache)
-            end
-          end
+        unless cache.key?(name)
+          cache[name] = fetch_releases(name)
+          cache[name].each { |dep| fetch_dependencies(dep, cache) }
         end
 
-        node << cache[name].values
+        node << cache[name]
       end
     end
 
