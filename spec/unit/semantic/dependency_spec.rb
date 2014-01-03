@@ -153,7 +153,9 @@ describe Semantic::Dependency do
     def subject(specs)
       graph = Semantic::Dependency.query(specs)
       yield graph if block_given?
+      expect(graph.dependencies).to_not be_empty
       result = Semantic::Dependency.resolve(graph)
+      expect(graph.dependencies).to_not be_empty
       result.map { |rel| [ rel.name, rel.version.to_s ] }
     end
 

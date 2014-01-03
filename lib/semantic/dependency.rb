@@ -65,7 +65,7 @@ module Semantic
     # @return [Array<ModuleRelease>] the list of releases to act on
     def resolve(graph)
       catch :next do
-        return walk(graph, graph.dependencies)
+        return walk(graph, graph.dependencies.dup)
       end
       raise UnsatisfiableGraph.new(graph)
     end
