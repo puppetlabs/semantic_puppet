@@ -80,14 +80,21 @@ module Semantic
         @constraints[:graph] << [ source, block ]
       end
 
-      # Checks the proposed solution (or partial solution) against the graph
+      # Checks the proposed solution (or partial solution) against the graph's
       # constraints.
       #
       # @see #add_graph_constraint
       #
       # @return [Boolean] true if none of the graph constraints are violated
       def considering_solution?(solution)
-        @constraints[:graph].all? { |_, check| check[solution] }
+        constrained = solution.select do |node|
+          @constraints.key?("#{node.name}")
+        end
+
+        @constraints[:graph].all? { |_, check| check[solution] } &&
+        constrained.all? do |node|
+          constraints_for("#{node.name}").all? { |x| x[:test][node] }
+        end
       end
 
       def satisfied_by?(node)
