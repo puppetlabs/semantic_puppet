@@ -118,6 +118,10 @@ module Semantic
       (@build      ? "+" + build      : '')
     end
 
+    def hash
+      self.to_s.hash
+    end
+
     private
     # This is a hack; tildes sort later than any valid identifier. The
     # advantage is that we don't need to handle stable vs. prerelease
