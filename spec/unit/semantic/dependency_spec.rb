@@ -83,18 +83,18 @@ describe Semantic::Dependency do
         expect(result.dependency_names).to match_array %w[ foo bar ]
       end
 
-      it 'populates the returned ModuleRelease with releated dependencies' do
+      it 'populates the returned ModuleRelease with related dependencies' do
         source.stub(:fetch).and_return(
           [ foo = create_release(source, 'foo', '1.0.0', 'bar' => '1.0.0') ],
           [ bar = create_release(source, 'bar', '1.0.0') ]
         )
 
         result = Semantic::Dependency.query('foo' => '1.0.0', 'bar' => '1.0.0')
-        expect(result.dependencies).to eql 'foo' => SortedSet.new([ foo ]),
-                                           'bar' => SortedSet.new([ bar ])
+        expect(result.dependencies['foo']).to eql SortedSet.new([ foo ])
+        expect(result.dependencies['bar']).to eql SortedSet.new([ bar ])
       end
 
-      it 'populates all returned ModuleReleases with releated dependencies' do
+      it 'populates all returned ModuleReleases with related dependencies' do
         source.stub(:fetch).and_return(
           [ foo = create_release(source, 'foo', '1.0.0', 'bar' => '1.0.0') ],
           [ bar = create_release(source, 'bar', '1.0.0', 'baz' => '0.1.0') ],
@@ -102,9 +102,9 @@ describe Semantic::Dependency do
         )
 
         result = Semantic::Dependency.query('foo' => '1.0.0')
-        expect(result.dependencies).to eql 'foo' => SortedSet.new([ foo ])
-        expect(foo.dependencies).to eql 'bar' => SortedSet.new([ bar ])
-        expect(bar.dependencies).to eql 'baz' => SortedSet.new([ baz ])
+        expect(result.dependencies['foo']).to eql SortedSet.new([ foo ])
+        expect(foo.dependencies['bar']).to eql SortedSet.new([ bar ])
+        expect(bar.dependencies['baz']).to eql SortedSet.new([ baz ])
       end
     end
 

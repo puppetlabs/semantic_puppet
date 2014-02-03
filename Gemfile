@@ -10,11 +10,11 @@ group :test do
 end
 
 group :metrics do
-  gem 'cane'
-  gem 'simplecov'
+  gem 'cane',      :platform => [ :mri_19, :mri_20, :mri_21 ]
+  gem 'simplecov', :platform => [ :mri_19, :mri_20, :mri_21 ]
 end
 
 group :doc do
-  gem 'yard', '~> 0.8'
-  gem 'redcarpet'
+  gem 'yard', '~> 0.8', :platform => [ :mri_19, :mri_20, :mri_21 ]
+  gem 'redcarpet',      :platform => [ :mri_19, :mri_20, :mri_21 ]
 end

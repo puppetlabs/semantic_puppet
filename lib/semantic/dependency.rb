@@ -103,7 +103,8 @@ module Semantic
       return considering if dependencies.empty?
 
       # Selecting a dependency from the collection...
-      name, deps = dependencies.shift
+      name = dependencies.keys.sort.first
+      deps = dependencies.delete(name)
 
       # ... (and stepping over it if we've seen it before) ...
       unless (deps & considering).empty?

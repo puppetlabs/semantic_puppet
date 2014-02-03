@@ -61,7 +61,7 @@ begin
     Gem::Tasks.new(
       :tag => { :format => 'v%s' },
       :sign => { :checksum => true, :pgp => true },
-      :build => { :tar => true },
+      :build => { :tar => true }
     )
   end
 rescue LoadError
