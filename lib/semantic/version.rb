@@ -114,8 +114,8 @@ module Semantic
 
     def to_s
       "#{major}.#{minor}.#{patch}" +
-      (@prerelease ? "-" + prerelease : '') +
-      (@build      ? "+" + build      : '')
+      (@prerelease.nil? || prerelease.empty? ? '' : "-" + prerelease) +
+      (@build.nil?      || build.empty?      ? '' : "+" + build     )
     end
 
     def hash

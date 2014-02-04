@@ -153,11 +153,11 @@ module Semantic
       def parse_lte_expression(expr)
         if expr =~ /^[^+]*-/
           finish = Version.parse(expr)
+          self.new(MIN_VERSION, finish)
         else
           finish = process_loose_expr(expr).last.send(:first_prerelease)
+          self.new(MIN_VERSION, finish, true)
         end
-
-        self.new(MIN_VERSION, finish)
       end
 
       # The "reasonably close" expression is used to designate ranges that have
@@ -191,7 +191,7 @@ module Semantic
           succ = succ.send(:first_prerelease)
           self.new(parsed, succ, true)
         else
-          self.new(parsed, Version.new(succ.major, succ.minor, succ.patch))
+          self.new(parsed, succ.next(:patch).send(:first_prerelease), true)
         end
       end
 
@@ -207,9 +207,14 @@ module Semantic
       def parse_inclusive_range_expression(start, finish)
         start, _ = process_loose_expr(start)
         _, finish = process_loose_expr(finish)
+
         start = start.send(:first_prerelease) if start.stable?
-        finish = finish.send(:first_prerelease) if finish.stable?
-        self.new(start, finish)
+        if finish.stable?
+          exclude = true
+          finish = finish.send(:first_prerelease)
+        end
+
+        self.new(start, finish, exclude)
       end
 
       # A "loose expression" is one that takes the form of all or part of a
@@ -276,6 +281,33 @@ module Semantic
     end
     alias :& :intersection
 
+    # Returns a string representation of this range, prefering simple common
+    # expressions for comprehension.
+    #
+    # @return [String] a range expression representing this VersionRange
+    def to_s
+      start, finish  = self.begin, self.end
+      inclusive = exclude_end? ? '' : '='
+
+      case
+      when exact_version?, patch_version?
+        "#{ start }"
+      when minor_version?
+        "#{ start }".sub(/.0$/, '.x')
+      when major_version?
+        "#{ start }".sub(/.0.0$/, '.x')
+      when open_end? && start.to_s =~ /-.*[.]0$/
+        ">#{ start }".sub(/.0$/, '')
+      when open_end?
+        ">=#{ start }"
+      when open_begin?
+        "<#{ inclusive }#{ finish }"
+      else
+        ">=#{ start } <#{ inclusive }#{ finish }"
+      end
+    end
+    alias :inspect :to_s
+
     private
     # The lowest precedence Version possible
     MIN_VERSION = Version.new(0, 0, 0, []).freeze
@@ -293,8 +325,80 @@ module Semantic
       self.end < other.end || (self.end == other.end && self.exclude_end?)
     end
 
-    public
+    # Describes whether this range has an upper limit.
+    # @return [Boolean] true if this range has no upper limit
+    def open_end?
+      self.end == MAX_VERSION
+    end
 
+    # Describes whether this range has a lower limit.
+    # @return [Boolean] true if this range has no lower limit
+    def open_begin?
+      self.begin == MIN_VERSION
+    end
+
+    # Describes whether this range follows the patterns for matching all
+    # releases with the same exact version.
+    # @return [Boolean] true if this range matches only a single exact version
+    def exact_version?
+      self.begin == self.end
+    end
+
+    # Describes whether this range follows the patterns for matching all
+    # releases with the same major version.
+    # @return [Boolean] true if this range matches only a single major version
+    def major_version?
+      start, finish = self.begin, self.end
+
+      exclude_end? &&
+      start.major.next == finish.major &&
+      same_minor? && start.minor == 0 &&
+      same_patch? && start.patch == 0 &&
+      [start.prerelease, finish.prerelease] == ['', '']
+    end
+
+    # Describes whether this range follows the patterns for matching all
+    # releases with the same minor version.
+    # @return [Boolean] true if this range matches only a single minor version
+    def minor_version?
+      start, finish = self.begin, self.end
+
+      exclude_end? &&
+      same_major? &&
+      start.minor.next == finish.minor &&
+      same_patch? && start.patch == 0 &&
+      [start.prerelease, finish.prerelease] == ['', '']
+    end
+
+    # Describes whether this range follows the patterns for matching all
+    # releases with the same patch version.
+    # @return [Boolean] true if this range matches only a single patch version
+    def patch_version?
+      start, finish = self.begin, self.end
+
+      exclude_end? &&
+      same_major? &&
+      same_minor? &&
+      start.patch.next == finish.patch &&
+      [start.prerelease, finish.prerelease] == ['', '']
+    end
+
+    # @return [Boolean] true if `begin` and `end` share the same major verion
+    def same_major?
+      self.begin.major == self.end.major
+    end
+
+    # @return [Boolean] true if `begin` and `end` share the same minor verion
+    def same_minor?
+      self.begin.minor == self.end.minor
+    end
+
+    # @return [Boolean] true if `begin` and `end` share the same patch verion
+    def same_patch?
+      self.begin.patch == self.end.patch
+    end
+
+    public
     # A range that matches no versions
     EMPTY_RANGE = VersionRange.new(MIN_VERSION, MIN_VERSION, true).freeze
   end
