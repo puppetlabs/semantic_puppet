@@ -20,13 +20,26 @@ module Semantic
       #   * ex. `"1.0.0 - 1.3.9"`, `"1 - 2.3"`
       # * Range Intersections
       #   * ex. `">1.0.0 <=2.3"`
+      # * Range Unions
+      #   * ex. `"1.x || 3.x"`
+      # * Parenthetical Grouping
+      #   * ex. `">=1.2.4 (1.x || 3.x)"`
       #
       # @param range_str [String] the version range string to parse
       # @return [VersionRange] a new {VersionRange} instance
       def parse(range_str)
         partial = '\d+(?:[.]\d+)?(?:[.][xX*]|[.]\d+(?:[-][0-9a-zA-Z-]*)?)?'
 
-        range = range_str.gsub(/([><=~])[ ]/, '\1')
+        range = range_str.gsub(/([(><=~])[ ]+|[ ]?([|]{2})[ ]?/, '\1\2')
+        range = range.gsub(/ - /, '#').strip
+
+        nest = 0
+        range.gsub!(/[()]/) do |x|
+          nest += 1 if x == '('
+          results = "\0#{nest}\0"
+          nest -= 1 if x == ')'
+          results
+        end
 
         return case range
         when /\A[=]?(#{partial})\Z/
@@ -35,16 +48,54 @@ module Semantic
           parse_inequality_expression($1, $2)
         when /\A~(#{partial})\Z/
           parse_reasonably_close_expression($1)
-        when /\A(#{partial}) - (#{partial})\Z/
+        when /\A(#{partial})#(#{partial})\Z/
           parse_inclusive_range_expression($1, $2)
-        when / /
-          range.split(' ').map { |part| parse(part) }.inject { |a,b| a & b }
+        when /[ \x00|]+/
+          parse_complex_expression(range)
         else
-          raise ArgumentError, "Unparsable version range: #{range_str.inspect}"
+          raise ArgumentError
         end
+
+      rescue ArgumentError
+        raise ArgumentError, "Unparsable version range: #{range_str.inspect}"
       end
 
       private
+
+      # Creates a new {VersionRange} from a non-terminal range expression. This
+      # is where parenthetical groups and union expressions are parsed out and
+      # sent through {VersionRange.parse} before being unified into a single
+      # result.
+      #
+      # @param expr [String] a complex version expression
+      # @return [VersionRange] a version range representing `expr`
+      def parse_complex_expression(expr)
+        ranges = []
+
+        current = VersionRange.new(MIN_VERSION, MAX_VERSION)
+        until expr.empty?
+          expr.lstrip!
+
+          case expr
+            # Parenthetical group
+            when regex = /^ (\x00\d+\x00) (.*?) \1 /x
+              current = current & VersionRange.parse($2)
+
+            # Disjunction
+            when regex = /^ [|]{2} /x
+              ranges << current
+              current = VersionRange.new(MIN_VERSION, MAX_VERSION)
+
+            # Version expression
+            when regex = /^ ([^ |]+) /x
+              current = current & VersionRange.parse($1)
+          end
+
+          expr = expr.split(regex, 2).last
+        end
+
+        (ranges << current).inject { |a,b| a | b }
+      end
 
       # Creates a new {VersionRange} from a "loose" description of a Semantic
       # Version number.
@@ -264,11 +315,9 @@ module Semantic
     # @param other [VersionRange] the range to intersect with
     # @return [VersionRange] the common subset
     def intersection(other)
-      unless other.kind_of?(VersionRange)
-        raise ArgumentError, "value must be a #{VersionRange}"
-      end
+      raise NOT_A_VERSION_RANGE unless other.kind_of?(VersionRange)
 
-      if self.begin < other.begin
+      if other.is_a?(Disjunction) || self.begin < other.begin
         return other.intersection(self)
       end
 
@@ -277,9 +326,25 @@ module Semantic
       end
 
       endpoint = ends_before?(other) ? self : other
-      self.class.new(self.begin, endpoint.end, endpoint.exclude_end?)
+      VersionRange.new(self.begin, endpoint.end, endpoint.exclude_end?)
     end
     alias :& :intersection
+
+    # Computes the union of a pair of ranges. This new range will match all
+    # values matched by either range.
+    #
+    # @param other [VersionRange] the range to union with
+    # @return [VersionRange] the unified range
+    def union(other)
+      raise NOT_A_VERSION_RANGE unless other.kind_of?(VersionRange)
+
+      # if !other.is_a?(Disjunction) && self.end >= other.begin
+      #   VersionRange.new(self.begin, other.end, other.exclude_end?)
+      # else
+        Disjunction.new(self) | other
+      # end
+    end
+    alias :| :union
 
     # Returns a string representation of this range, prefering simple common
     # expressions for comprehension.
@@ -290,6 +355,8 @@ module Semantic
       inclusive = exclude_end? ? '' : '='
 
       case
+      when EMPTY_RANGE == self
+        "<0.0.0"
       when exact_version?, patch_version?
         "#{ start }"
       when minor_version?
@@ -309,6 +376,7 @@ module Semantic
     alias :inspect :to_s
 
     private
+
     # The lowest precedence Version possible
     MIN_VERSION = Version.new(0, 0, 0, []).freeze
 
@@ -398,8 +466,100 @@ module Semantic
       self.begin.patch == self.end.patch
     end
 
+    undef :to_a
+
+    class Disjunction < VersionRange
+      def initialize(*ranges)
+        raise NOT_A_VERSION_RANGE unless ranges.all? do |x|
+          x.kind_of?(VersionRange)
+        end
+
+        @ranges = ranges
+      end
+
+      # Tests whether the given version is matched by this range.
+      # @param version [Version] the version to test
+      # @return [Boolean] true if `version` is contained by this range
+      def include?(version)
+        @ranges.any? { |x| x.include? version }
+      end
+      alias :=== :include?
+
+      # (see VersionRange#intersection)
+      def intersection(other)
+        raise NOT_A_VERSION_RANGE unless other.kind_of?(VersionRange)
+
+        ranges = @ranges.map { |x| x & other }.reject { |x| x == EMPTY_RANGE }
+        Disjunction.new(*ranges)
+      end
+      alias :& :intersection
+
+      # (see VersionRange#union)
+      def union(other)
+        raise NOT_A_VERSION_RANGE unless other.kind_of?(VersionRange)
+
+        if other.is_a? Disjunction
+          return other.instance_variable_get(:@ranges).inject(self) do |acc,v|
+            acc.union(v)
+          end
+        end
+
+        ranges = (@ranges.dup << other)
+        collapsed = collapse_ranges(ranges)
+
+        if collapsed.length == 1
+          collapsed.first
+        else
+          Disjunction.new(*collapsed)
+        end
+      end
+      alias :| :union
+
+      # (see VersionRange#to_s)
+      def to_s
+        if @ranges.length == 1
+          return @ranges.first.to_s
+        end
+
+        @ranges.map do |x|
+          if x.to_s =~ / /
+            "(#{x})"
+          else
+            x
+          end
+        end.join(' || ')
+      end
+      alias :inspect :to_s
+
+      private
+
+      # Transforms a list of disjoint ranges into the shortest possible list
+      # that matches the same set of versions. It does this by collapsing two
+      # tangential or overlapping ranges into a single range covering the same
+      # space.
+      #
+      # @param ranges [[VersionRange]] the ranges to collapse
+      # @return [[VersionRange]] a minimal sorted list of ranges
+      def collapse_ranges(ranges)
+        ranges = ranges.sort_by { |x| x.begin }
+
+        ranges.inject([ranges.shift]) do |acc, range|
+          first = acc.pop
+          if first.end >= range.begin
+            last = first.send(:ends_before?, range) ? range : first
+            acc << VersionRange.new(first.begin, last.end, last.exclude_end?)
+          else
+            acc << first << range
+          end
+        end
+      end
+    end
+
+    NOT_A_VERSION_RANGE = ArgumentError.new("value must be a #{VersionRange}")
+
     public
+
     # A range that matches no versions
-    EMPTY_RANGE = VersionRange.new(MIN_VERSION, MIN_VERSION, true).freeze
+    EMPTY_RANGE = VersionRange.parse('< 0.0.0').freeze
   end
 end
