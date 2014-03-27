@@ -113,9 +113,14 @@ module Semantic
       # ... we'll iterate through the list of possible versions in order.
       preferred_releases(deps).reverse_each do |dep|
 
+        # We should skip any releases that violate any module's constraints.
+        unless [graph, *considering].all? { |x| x.satisfies_constraints?(dep) }
+          next
+        end
+
         # We should skip over any releases that violate graph-level constraints.
         potential_solution = considering.dup << dep
-        unless graph.considering_solution? potential_solution
+        unless graph.satisfies_graph? potential_solution
           next
         end
 

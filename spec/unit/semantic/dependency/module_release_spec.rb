@@ -33,6 +33,18 @@ describe Semantic::Dependency::ModuleRelease do
 
   end
 
+  describe '#to_s' do
+
+    let(:name) { 'foobarbaz' }
+    let(:version) { '1.2.3' }
+
+    subject { make_release(name, version).to_s }
+
+    it { should =~ /#{name}/ }
+    it { should =~ /#{version}/ }
+
+  end
+
   describe '#<<' do
 
     it 'marks matching dependencies as satisfied' do
@@ -105,26 +117,26 @@ describe Semantic::Dependency::ModuleRelease do
 
   end
 
-  describe '#satisfied_by?' do
+  describe '#satisfies_dependency?' do
 
     it 'returns false when there are no dependencies to satisfy' do
       release = make_release('foo', '1.0.0')
-      expect(no_dependencies).to_not be_satisfied_by release
+      expect(no_dependencies.satisfies_dependency?(release)).to_not be true
     end
 
     it 'returns false when the release does not match the dependency name' do
       release = make_release('bar', '1.0.0')
-      expect(one_dependency).to_not be_satisfied_by release
+      expect(one_dependency.satisfies_dependency?(release)).to_not be true
     end
 
     it 'returns false when the release does not match the dependency version' do
       release = make_release('foo', '4.0.0')
-      expect(one_dependency).to_not be_satisfied_by release
+      expect(one_dependency.satisfies_dependency?(release)).to_not be true
     end
 
     it 'returns true when the release matches the dependency' do
       release = make_release('foo', '1.0.0')
-      expect(one_dependency).to be_satisfied_by release
+      expect(one_dependency.satisfies_dependency?(release)).to be true
     end
 
   end

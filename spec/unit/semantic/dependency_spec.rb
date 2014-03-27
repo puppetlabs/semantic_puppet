@@ -160,7 +160,7 @@ describe Semantic::Dependency do
     end
 
     let(:modules) { Hash.new { |h,k| h[k] = [] }}
-    let(:source) { double('Source') }
+    let(:source) { double('Source', :priority => 0) }
 
     before { Semantic::Dependency.add_source(source) }
 
@@ -302,7 +302,49 @@ describe Semantic::Dependency do
       end
     end
 
-    context 'for a module with dependencies that violate graph constraints' do
+    context 'for a module with dependencies' do
+      context 'that violate module constraints on the graph' do
+        def foo(range)
+          subject('foo' => range) do |graph|
+            graph.add_constraint('no downgrade', 'bar', '> 3.0.0') do |node|
+              Semantic::VersionRange.parse('> 3.0.0') === node.version
+            end
+          end
+        end
+
+        context 'that can be resolved' do
+          it 'terminates' do
+            add_source_modules('foo', '1.1.0', 'bar' => '1.x')
+            add_source_modules('foo', '1.2.0', 'bar' => '>= 2.0.0')
+            add_source_modules('bar', '1.0.0')
+            add_source_modules('bar', '2.0.0', 'baz' => '>= 1.0.0')
+            add_source_modules('bar', '3.0.0')
+            add_source_modules('bar', '3.0.1')
+            add_source_modules('baz', '1.0.0')
+
+            expect(foo('1.x')).to include %w[ foo 1.2.0 ], %w[ bar 3.0.1 ]
+          end
+        end
+
+        context 'that cannot be resolved' do
+          it 'fails with an appropriate message' do
+            add_source_modules('foo', '1.1.0', 'bar' => '1.x')
+            add_source_modules('foo', '1.2.0', 'bar' => '2.x')
+            add_source_modules('bar', '1.0.0', 'baz' => '1.x')
+            add_source_modules('bar', '2.0.0', 'baz' => '1.x')
+            add_source_modules('baz', '1.0.0')
+            add_source_modules('baz', '3.0.0')
+            add_source_modules('baz', '3.0.1')
+
+            with_message = /Could not find satisfying releases/
+            expect { foo('1.x') }.to raise_exception with_message
+            expect { foo('1.x') }.to raise_exception /\bfoo\b/
+          end
+        end
+      end
+    end
+
+    context 'that violate graph constraints' do
       def foo(range)
         subject('foo' => range) do |graph|
           graph.add_graph_constraint('uniqueness') do |nodes|

@@ -8,14 +8,23 @@ module Semantic
       def initialize(graph)
         @graph = graph
 
-        deps = graph.modules
-        if deps.length == 2
-          deps = [ deps.join(' and ') ]
-        elsif deps.length > 2
-          deps[-1] = "and #{deps.last}"
-        end
+        deps = sentence_from_list(graph.modules)
+        super "Could not find satisfying releases for #{deps}"
+      end
 
-        super "Could not find satisfying releases for #{deps.join(', ')}"
+      private
+
+      def sentence_from_list(list)
+        case list.length
+        when 1
+          list.first
+        when 2
+          list.join(' and ')
+        else
+          list = list.dup
+          list.push("and #{list.pop}")
+          list.join(', ')
+        end
       end
     end
   end

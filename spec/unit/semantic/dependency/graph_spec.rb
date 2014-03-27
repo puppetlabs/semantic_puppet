@@ -48,19 +48,19 @@ describe Semantic::Dependency::Graph do
     end
   end
 
-  describe '#satisfied_by?' do
+  describe '#satisfies_dependency?' do
     it 'is not satisfied by modules it does not depend on' do
       graph = Graph.new('foo' => VersionRange.parse('1.x'))
       release = ModuleRelease.new(nil, 'bar', Version.parse('1.0.0'))
 
-      expect(graph).to_not be_satisfied_by release
+      expect(graph.satisfies_dependency?(release)).to_not be true
     end
 
     it 'is not satisfied by modules that do not fulfill the constraint' do
       graph = Graph.new('foo' => VersionRange.parse('1.x'))
       release = ModuleRelease.new(nil, 'foo', Version.parse('2.3.1'))
 
-      expect(graph).to_not be_satisfied_by release
+      expect(graph.satisfies_dependency?(release)).to_not be true
     end
 
     it 'is not satisfied by modules that do not fulfill all the constraints' do
@@ -71,7 +71,7 @@ describe Semantic::Dependency::Graph do
 
       release = ModuleRelease.new(nil, 'foo', Version.parse('1.2.1'))
 
-      expect(graph).to_not be_satisfied_by release
+      expect(graph.satisfies_dependency?(release)).to_not be true
     end
 
     it 'is satisfied by modules that do fulfill all the constraints' do
@@ -82,7 +82,7 @@ describe Semantic::Dependency::Graph do
 
       release = ModuleRelease.new(nil, 'foo', Version.parse('1.2.3'))
 
-      expect(graph).to be_satisfied_by release
+      expect(graph.satisfies_dependency?(release)).to be true
     end
   end
 
@@ -106,7 +106,7 @@ describe Semantic::Dependency::Graph do
     end
   end
 
-  describe '#valid_solution?' do
+  describe '#satisfies_graph?' do
     it 'returns false if the solution violates a graph constraint' do
       graph = Graph.new
       graph.add_graph_constraint('me') do |nodes|
@@ -119,7 +119,7 @@ describe Semantic::Dependency::Graph do
         double('Node', :name => 'baz'),
       ]
 
-      expect(graph).to_not be_considering_solution releases
+      expect(graph.satisfies_graph?(releases)).to_not be true
     end
 
     it 'returns false if the solution violates any graph constraint' do
@@ -137,7 +137,7 @@ describe Semantic::Dependency::Graph do
         double('Node', :name => 'bangerang'),
       ]
 
-      expect(graph).to_not be_considering_solution releases
+      expect(graph.satisfies_graph?(releases)).to_not be true
     end
 
     it 'returns true if the solution violates no graph constraints' do
@@ -155,7 +155,7 @@ describe Semantic::Dependency::Graph do
         double('Node', :name => 'boom'),
       ]
 
-      expect(graph).to be_considering_solution releases
+      expect(graph.satisfies_graph?(releases)).to be true
     end
   end
 

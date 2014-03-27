@@ -6,19 +6,24 @@ describe Semantic::Dependency::GraphNode do
     Class.new do
       include Semantic::Dependency::GraphNode
 
-      def initialize(*satisfying)
+      attr_accessor :name
+
+      def initialize(name, *satisfying)
+        @name = name
         @satisfying = satisfying
         @satisfying.each { |x| add_dependency(x.name) }
       end
 
-      def satisfied_by?(node)
+      # @override
+      def satisfies_dependency?(node)
         @satisfying.include?(node)
       end
     end
   end
 
   def instance(*args)
-    klass.new(*args)
+    name = args.first.name unless args.empty?
+    klass.new(name || 'unnamed', *args)
   end
 
   context 'dependencies' do
@@ -118,6 +123,18 @@ describe Semantic::Dependency::GraphNode do
       end
 
       subject.populate_children(nodes)
+    end
+  end
+
+  describe '#<=>' do
+    it 'can be compared' do
+      a = instance(double('Node', :name => 'a'))
+      b = instance(double('Node', :name => 'b'))
+
+      expect(a).to be < b
+      expect(b).to be > a
+      expect([b, a].sort).to eql [a, b]
+      expect([a, b].sort).to eql [a, b]
     end
   end
 
