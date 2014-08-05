@@ -10,20 +10,12 @@ module Semantic
     class ValidationFailure < ArgumentError; end
 
     class << self
-      LOOSE_REGEX = /
-        \A
-        (\d+)[.](\d+)[.](\d+) # Major . Minor . Patch
-        (?: [-](.*?))?        # Prerelease
-        (?: [+](.*?))?        # Build
-        \Z
-      /x
-
       # Parse a Semantic Version string.
       #
       # @param ver [String] the version string to parse
       # @return [Version] a comparable {Version} object
       def parse(ver)
-        match, major, minor, patch, prerelease, build = *ver.match(LOOSE_REGEX)
+        match, major, minor, patch, prerelease, build = *ver.match(/\A#{REGEX_FULL}\Z/)
 
         if match.nil?
           raise 'Version numbers MUST begin with three dot-separated numbers'
@@ -35,6 +27,14 @@ module Semantic
         build = parse_build_metadata(build) if build
 
         self.new(major.to_i, minor.to_i, patch.to_i, prerelease, build)
+      end
+
+      # Validate a Semantic Version string.
+      #
+      # @param ver [String] the version string to validate
+      # @return [bool] whether or not the string represents a valid Semantic Version
+      def valid?(ver)
+        !!(ver =~ /\A#{REGEX_FULL}\Z/)
       end
 
       private
@@ -164,5 +164,19 @@ module Semantic
     def first_prerelease
       self.class.new(@major, @minor, @patch, [])
     end
+
+    public
+
+    # Version string matching regexes
+    REGEX_NUMERIC = "(\\d+)[.](\\d+)[.](\\d+)" # Major . Minor . Patch
+    REGEX_PRE     = "(?:[-](.*?))?"            # Prerelease
+    REGEX_BUILD   = "(?:[+](.*?))?"            # Build
+    REGEX_FULL    = REGEX_NUMERIC + REGEX_PRE + REGEX_BUILD
+
+    # The lowest precedence Version possible
+    MIN = self.new(0, 0, 0, []).freeze
+
+    # The highest precedence Version possible
+    MAX = self.new((1.0/0.0), 0, 0).freeze
   end
 end
