@@ -190,7 +190,7 @@ module Semantic
       # @example "Reasonably close" minor version
       #   "~1.2" # => (>=1.2.0 <1.3.0)
       # @example "Reasonably close" patch version
-      #   "~1.2.3" # => (1.2.3)
+      #   "~1.2.3" # => (>=1.2.3 <1.3.0)
       # @example "Reasonably close" prerelease version
       #   "~1.2.3-alpha" # => (>=1.2.3-alpha <1.2.4)
       #
@@ -201,6 +201,10 @@ module Semantic
 
         if parsed.stable?
           parsed = parsed.send(:first_prerelease)
+
+          # Handle the special case of "~1.2.3" expressions.
+          succ = succ.next(:minor) if ((parsed.major == succ.major) && (parsed.minor == succ.minor))
+
           succ = succ.send(:first_prerelease)
           self.new(parsed, succ, true)
         else
