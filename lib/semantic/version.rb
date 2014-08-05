@@ -29,6 +29,14 @@ module Semantic
         self.new(major.to_i, minor.to_i, patch.to_i, prerelease, build)
       end
 
+      # Validate a Semantic Version string.
+      #
+      # @param ver [String] the version string to validate
+      # @return [bool] whether or not the string represents a valid Semantic Version
+      def valid?(ver)
+        !!(ver =~ /\A#{REGEX_FULL}\Z/)
+      end
+
       private
       def parse_prerelease(prerelease)
         subject = 'Prerelease identifiers'

@@ -391,6 +391,25 @@ describe Semantic::Version do
 
   end
 
+  describe '.valid?' do
+    # All the specific variations are tested in the .parse tests, so these are just basic
+    # smoke tests.
+
+    def subject(str)
+      Semantic::Version.valid?(str)
+    end
+
+    it 'recognizes valid versions' do
+      expect(subject('1.0.1')).to be true
+      expect(subject('1.0.3-p324')).to be true
+    end
+
+    it 'does not recognize invalid versions' do
+      expect(subject('1.0')).to be false
+      expect(subject('1.0.3.6')).to be false
+    end
+  end
+
   describe '#<=>' do
     def parse(vstring)
       Semantic::Version.parse(vstring)
