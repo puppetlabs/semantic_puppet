@@ -123,7 +123,7 @@ module Semantic
           start = process_loose_expr(expr).last.send(:first_prerelease)
         end
 
-        self.new(start, MAX_VERSION)
+        self.new(start, Semantic::Version::MAX)
       end
 
       # Returns a range covering all versions greater than or equal to the given
@@ -139,7 +139,7 @@ module Semantic
           start = process_loose_expr(expr).first.send(:first_prerelease)
         end
 
-        self.new(start, MAX_VERSION)
+        self.new(start, Semantic::Version::MAX)
       end
 
       # Returns a range covering all versions less than the given `expr`.
@@ -154,7 +154,7 @@ module Semantic
           finish = process_loose_expr(expr).first.send(:first_prerelease)
         end
 
-        self.new(MIN_VERSION, finish, true)
+        self.new(Semantic::Version::MIN, finish, true)
       end
 
       # Returns a range covering all versions less than or equal to the given
@@ -166,10 +166,10 @@ module Semantic
       def parse_lte_expression(expr)
         if expr =~ /^[^+]*-/
           finish = Version.parse(expr)
-          self.new(MIN_VERSION, finish)
+          self.new(Semantic::Version::MIN, finish)
         else
           finish = process_loose_expr(expr).last.send(:first_prerelease)
-          self.new(MIN_VERSION, finish, true)
+          self.new(Semantic::Version::MIN, finish, true)
         end
       end
 
@@ -323,12 +323,6 @@ module Semantic
 
     private
 
-    # The lowest precedence Version possible
-    MIN_VERSION = Version.new(0, 0, 0, []).freeze
-
-    # The highest precedence Version possible
-    MAX_VERSION = Version.new((1.0/0.0), 0, 0).freeze
-
     # Determines whether this {VersionRange} has an earlier endpoint than the
     # give `other` range.
     #
@@ -342,13 +336,13 @@ module Semantic
     # Describes whether this range has an upper limit.
     # @return [Boolean] true if this range has no upper limit
     def open_end?
-      self.end == MAX_VERSION
+      self.end == Semantic::Version::MAX
     end
 
     # Describes whether this range has a lower limit.
     # @return [Boolean] true if this range has no lower limit
     def open_begin?
-      self.begin == MIN_VERSION
+      self.begin == Semantic::Version::MIN
     end
 
     # Describes whether this range follows the patterns for matching all
