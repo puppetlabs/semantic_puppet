@@ -21,10 +21,6 @@ describe Semantic::Version do
           'Version numbers MUST begin with three dot-separated numbers'
         end
 
-        let(:no_leading_zeroes) do
-          'Version numbers MUST NOT contain leading zeroes'
-        end
-
         it 'rejects versions that contain too few parts' do
           expect { subject('1.2') }.to raise_error(must_begin_with_digits)
         end
@@ -46,9 +42,9 @@ describe Semantic::Version do
         end
 
         it 'rejects version numbers containing leading zeroes' do
-          expect { subject('01.2.3') }.to raise_error(no_leading_zeroes)
-          expect { subject('1.02.3') }.to raise_error(no_leading_zeroes)
-          expect { subject('1.2.03') }.to raise_error(no_leading_zeroes)
+          expect { subject('01.2.3') }.to raise_error(must_begin_with_digits)
+          expect { subject('1.02.3') }.to raise_error(must_begin_with_digits)
+          expect { subject('1.2.03') }.to raise_error(must_begin_with_digits)
         end
 
         it 'permits zeroes in version number parts' do
@@ -263,10 +259,6 @@ describe Semantic::Version do
           'Version numbers MUST begin with three dot-separated numbers'
         end
 
-        let(:no_leading_zeroes) do
-          'Version numbers MUST NOT contain leading zeroes'
-        end
-
         it 'rejects versions that contain too few parts' do
           expect { subject('1.2') }.to raise_error(must_begin_with_digits)
         end
@@ -341,7 +333,7 @@ describe Semantic::Version do
           expect { subject('1.2.3-') }.to raise_error(must_not_be_empty)
         end
 
-        pending 'permits numeric prerelease identifiers with leading zeroes' do
+        it 'rejects numeric prerelease identifiers with leading zeroes' do
           expect { subject('1.2.3-01') }.to raise_error(no_leading_zeroes)
         end
 
@@ -405,8 +397,9 @@ describe Semantic::Version do
     end
 
     it 'does not recognize invalid versions' do
-      expect(subject('1.0')).to be false
-      expect(subject('1.0.3.6')).to be false
+      expect(subject('1.0')).to be false      # too few segments
+      expect(subject('1.0.3.6')).to be false  # too many segments
+      expect(subject('1.03.14')).to be false  # leading zero in segment
     end
   end
 

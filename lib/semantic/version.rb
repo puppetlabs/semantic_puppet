@@ -19,8 +19,6 @@ module Semantic
 
         if match.nil?
           raise 'Version numbers MUST begin with three dot-separated numbers'
-        elsif [major, minor, patch].any? { |x| x =~ /^0\d+/ }
-          raise 'Version numbers MUST NOT contain leading zeroes'
         end
 
         prerelease = parse_prerelease(prerelease) if prerelease
@@ -168,7 +166,7 @@ module Semantic
     public
 
     # Version string matching regexes
-    REGEX_NUMERIC = "(\\d+)[.](\\d+)[.](\\d+)" # Major . Minor . Patch
+    REGEX_NUMERIC = "(0|[1-9]\\d*)[.](0|[1-9]\\d*)[.](0|[1-9]\\d*)" # Major . Minor . Patch
     REGEX_PRE     = "(?:[-](.*?))?"            # Prerelease
     REGEX_BUILD   = "(?:[+](.*?))?"            # Build
     REGEX_FULL    = REGEX_NUMERIC + REGEX_PRE + REGEX_BUILD
