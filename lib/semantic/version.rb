@@ -18,7 +18,7 @@ module Semantic
         match, major, minor, patch, prerelease, build = *ver.match(/\A#{REGEX_FULL}\Z/)
 
         if match.nil?
-          raise 'Version numbers MUST begin with three dot-separated numbers'
+          raise "Unable to parse '#{ver}' as a semantic version identifier"
         end
 
         prerelease = parse_prerelease(prerelease) if prerelease
