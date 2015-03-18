@@ -1,16 +1,16 @@
 # -*- encoding: utf-8 -*-
 $:.push File.expand_path("../lib", __FILE__)
-require "semantic"
+require "semantic_puppet"
 
 spec = Gem::Specification.new do |s|
   # Metadata
-  s.name        = "semantic"
-  s.version     = Semantic::VERSION
-  s.authors     = ["Pieter van de Bruggen"]
-  s.email       = ["pieter@puppetlabs.com"]
-  s.homepage    = "https://github.com/puppetlabs/semantic-gem"
+  s.name        = "semantic_puppet"
+  s.version     = SemanticPuppet::VERSION
+  s.authors     = ["Puppet Labs"]
+  s.email       = ["info@puppetlabs.com"]
+  s.homepage    = "https://github.com/puppetlabs/semantic_puppet-gem"
   s.summary     = "Useful tools for working with Semantic Versions."
-  # s.description = %q{TODO: Write a gem description}
+  s.description = %q{Tools used by Puppet to parse, validate, and compare Semantic Versions and Version Ranges and to query and resolve module dependencies.}
 
   # Manifest
   s.files         = `git ls-files`.split("\n")

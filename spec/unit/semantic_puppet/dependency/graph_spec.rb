@@ -1,12 +1,12 @@
 require 'spec_helper'
-require 'semantic/dependency/graph'
+require 'semantic_puppet/dependency/graph'
 
-describe Semantic::Dependency::Graph do
-  Graph         = Semantic::Dependency::Graph
-  GraphNode     = Semantic::Dependency::GraphNode
-  ModuleRelease = Semantic::Dependency::ModuleRelease
-  Version       = Semantic::Version
-  VersionRange  = Semantic::VersionRange
+describe SemanticPuppet::Dependency::Graph do
+  Graph         = SemanticPuppet::Dependency::Graph
+  GraphNode     = SemanticPuppet::Dependency::GraphNode
+  ModuleRelease = SemanticPuppet::Dependency::ModuleRelease
+  Version       = SemanticPuppet::Version
+  VersionRange  = SemanticPuppet::VersionRange
 
   describe '#initialize' do
     it 'can be called without arguments' do

@@ -1,7 +1,7 @@
-require 'semantic/dependency'
+require 'semantic_puppet/dependency'
 require 'set'
 
-module Semantic
+module SemanticPuppet
   module Dependency
     module GraphNode
       include Comparable

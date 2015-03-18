@@ -1,7 +1,7 @@
 require 'spec_helper'
-require 'semantic/dependency/unsatisfiable_graph'
+require 'semantic_puppet/dependency/unsatisfiable_graph'
 
-describe Semantic::Dependency::UnsatisfiableGraph do
+describe SemanticPuppet::Dependency::UnsatisfiableGraph do
 
   let(:modules) { %w[ foo bar baz ] }
   let(:graph) { double('Graph', :modules => modules) }

@@ -1,10 +1,10 @@
 require 'spec_helper'
-require 'semantic/version'
+require 'semantic_puppet/version'
 
-describe Semantic::Version do
+describe SemanticPuppet::Version do
 
   def subject(str)
-    Semantic::Version.parse(str)
+    SemanticPuppet::Version.parse(str)
   end
 
   describe '.parse' do
@@ -388,7 +388,7 @@ describe Semantic::Version do
     # smoke tests.
 
     def subject(str)
-      Semantic::Version.valid?(str)
+      SemanticPuppet::Version.valid?(str)
     end
 
     it 'recognizes valid versions' do
@@ -405,7 +405,7 @@ describe Semantic::Version do
 
   describe '#<=>' do
     def parse(vstring)
-      Semantic::Version.parse(vstring)
+      SemanticPuppet::Version.parse(vstring)
     end
 
     context 'Spec v2.0.0' do

@@ -1,13 +1,13 @@
 require 'spec_helper'
-require 'semantic/dependency'
+require 'semantic_puppet/dependency'
 
-describe Semantic::Dependency do
+describe SemanticPuppet::Dependency do
   def create_release(source, name, version, deps = {})
-    Semantic::Dependency::ModuleRelease.new(
+    SemanticPuppet::Dependency::ModuleRelease.new(
       source,
       name,
-      Semantic::Version.parse(version),
-      Hash[deps.map { |k, v| [k, Semantic::VersionRange.parse(v) ] }]
+      SemanticPuppet::Version.parse(version),
+      Hash[deps.map { |k, v| [k, SemanticPuppet::VersionRange.parse(v) ] }]
     )
   end
 
@@ -21,12 +21,12 @@ describe Semantic::Dependency do
     end
 
     it 'can be modified by using #add_source' do
-      subject.add_source(Semantic::Dependency::Source.new)
+      subject.add_source(SemanticPuppet::Dependency::Source.new)
       expect(subject.sources).to_not be_empty
     end
 
     it 'can be emptied by using #clear_sources' do
-      subject.add_source(Semantic::Dependency::Source.new)
+      subject.add_source(SemanticPuppet::Dependency::Source.new)
       subject.clear_sources
       expect(subject.sources).to be_empty
     end
@@ -42,12 +42,12 @@ describe Semantic::Dependency do
     context 'with one source' do
       let(:source) { double('Source') }
 
-      before { Semantic::Dependency.add_source(source) }
+      before { SemanticPuppet::Dependency.add_source(source) }
 
       it 'queries the source for release information' do
         source.should_receive(:fetch).with('module_name').and_return([])
 
-        Semantic::Dependency.query('module_name' => '1.0.0')
+        SemanticPuppet::Dependency.query('module_name' => '1.0.0')
       end
 
       it 'queries the source for each dependency' do
@@ -56,7 +56,7 @@ describe Semantic::Dependency do
         ])
         source.should_receive(:fetch).with('bar').and_return([])
 
-        Semantic::Dependency.query('module_name' => '1.0.0')
+        SemanticPuppet::Dependency.query('module_name' => '1.0.0')
       end
 
       it 'queries the source for each dependency only once' do
@@ -73,13 +73,13 @@ describe Semantic::Dependency do
         ])
         source.should_receive(:fetch).with('baz').once.and_return([])
 
-        Semantic::Dependency.query('module_name' => '1.0.0')
+        SemanticPuppet::Dependency.query('module_name' => '1.0.0')
       end
 
       it 'returns a ModuleRelease with the requested dependencies' do
         source.stub(:fetch).and_return([])
 
-        result = Semantic::Dependency.query('foo' => '1.0.0', 'bar' => '1.0.0')
+        result = SemanticPuppet::Dependency.query('foo' => '1.0.0', 'bar' => '1.0.0')
         expect(result.dependency_names).to match_array %w[ foo bar ]
       end
 
@@ -89,7 +89,7 @@ describe Semantic::Dependency do
           [ bar = create_release(source, 'bar', '1.0.0') ]
         )
 
-        result = Semantic::Dependency.query('foo' => '1.0.0', 'bar' => '1.0.0')
+        result = SemanticPuppet::Dependency.query('foo' => '1.0.0', 'bar' => '1.0.0')
         expect(result.dependencies['foo']).to eql SortedSet.new([ foo ])
         expect(result.dependencies['bar']).to eql SortedSet.new([ bar ])
       end
@@ -101,7 +101,7 @@ describe Semantic::Dependency do
           [ baz = create_release(source, 'baz', '0.1.0', 'baz' => '1.0.0') ]
         )
 
-        result = Semantic::Dependency.query('foo' => '1.0.0')
+        result = SemanticPuppet::Dependency.query('foo' => '1.0.0')
         expect(result.dependencies['foo']).to eql SortedSet.new([ foo ])
         expect(foo.dependencies['bar']).to eql SortedSet.new([ bar ])
         expect(bar.dependencies['baz']).to eql SortedSet.new([ baz ])
@@ -114,9 +114,9 @@ describe Semantic::Dependency do
       let(:source3) { double('SourceThree') }
 
       before do
-        Semantic::Dependency.add_source(source1)
-        Semantic::Dependency.add_source(source2)
-        Semantic::Dependency.add_source(source3)
+        SemanticPuppet::Dependency.add_source(source1)
+        SemanticPuppet::Dependency.add_source(source2)
+        SemanticPuppet::Dependency.add_source(source3)
       end
 
       it 'queries each source in turn' do
@@ -124,7 +124,7 @@ describe Semantic::Dependency do
         source2.should_receive(:fetch).with('module_name').and_return([])
         source3.should_receive(:fetch).with('module_name').and_return([])
 
-        Semantic::Dependency.query('module_name' => '1.0.0')
+        SemanticPuppet::Dependency.query('module_name' => '1.0.0')
       end
 
       it 'resolves all dependencies against all sources' do
@@ -138,7 +138,7 @@ describe Semantic::Dependency do
         source2.should_receive(:fetch).with('bar').and_return([])
         source3.should_receive(:fetch).with('bar').and_return([])
 
-        Semantic::Dependency.query('module_name' => '1.0.0')
+        SemanticPuppet::Dependency.query('module_name' => '1.0.0')
       end
     end
   end
@@ -151,10 +151,10 @@ describe Semantic::Dependency do
     end
 
     def subject(specs)
-      graph = Semantic::Dependency.query(specs)
+      graph = SemanticPuppet::Dependency.query(specs)
       yield graph if block_given?
       expect(graph.dependencies).to_not be_empty
-      result = Semantic::Dependency.resolve(graph)
+      result = SemanticPuppet::Dependency.resolve(graph)
       expect(graph.dependencies).to_not be_empty
       result.map { |rel| [ rel.name, rel.version.to_s ] }
     end
@@ -162,7 +162,7 @@ describe Semantic::Dependency do
     let(:modules) { Hash.new { |h,k| h[k] = [] }}
     let(:source) { double('Source', :priority => 0) }
 
-    before { Semantic::Dependency.add_source(source) }
+    before { SemanticPuppet::Dependency.add_source(source) }
 
     context 'for a module without dependencies' do
       def foo(range)
@@ -307,7 +307,7 @@ describe Semantic::Dependency do
         def foo(range)
           subject('foo' => range) do |graph|
             graph.add_constraint('no downgrade', 'bar', '> 3.0.0') do |node|
-              Semantic::VersionRange.parse('> 3.0.0') === node.version
+              SemanticPuppet::VersionRange.parse('> 3.0.0') === node.version
             end
           end
         end

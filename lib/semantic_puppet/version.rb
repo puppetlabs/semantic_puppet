@@ -1,8 +1,8 @@
-require 'semantic'
+require 'semantic_puppet'
 
-module Semantic
+module SemanticPuppet
 
-  # @note Semantic::Version subclasses Numeric so that it has sane Range
+  # @note SemanticPuppet::Version subclasses Numeric so that it has sane Range
   #       semantics in Ruby 1.9+.
   class Version < Numeric
     include Comparable

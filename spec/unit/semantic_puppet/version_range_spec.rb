@@ -1,39 +1,39 @@
 require 'spec_helper'
-require 'semantic/version'
+require 'semantic_puppet/version'
 
-describe Semantic::VersionRange do
+describe SemanticPuppet::VersionRange do
 
   describe '.parse' do
     def self.test_range(range_list, str, includes, excludes)
       Array(range_list).each do |expr|
         example "#{expr.inspect} stringifies as #{str}" do
-          range = Semantic::VersionRange.parse(expr)
+          range = SemanticPuppet::VersionRange.parse(expr)
           expect(range.to_s).to eql str
         end
 
         includes.each do |vstring|
           example "#{expr.inspect} includes #{vstring}" do
-            range = Semantic::VersionRange.parse(expr)
-            expect(range).to include(Semantic::Version.parse(vstring))
+            range = SemanticPuppet::VersionRange.parse(expr)
+            expect(range).to include(SemanticPuppet::Version.parse(vstring))
           end
 
           example "parse(#{expr.inspect}).to_s includes #{vstring}" do
-            range = Semantic::VersionRange.parse(expr)
-            range = Semantic::VersionRange.parse(range.to_s)
-            expect(range).to include(Semantic::Version.parse(vstring))
+            range = SemanticPuppet::VersionRange.parse(expr)
+            range = SemanticPuppet::VersionRange.parse(range.to_s)
+            expect(range).to include(SemanticPuppet::Version.parse(vstring))
           end
         end
 
         excludes.each do |vstring|
           example "#{expr.inspect} excludes #{vstring}" do
-            range = Semantic::VersionRange.parse(expr)
-            expect(range).to_not include(Semantic::Version.parse(vstring))
+            range = SemanticPuppet::VersionRange.parse(expr)
+            expect(range).to_not include(SemanticPuppet::Version.parse(vstring))
           end
 
           example "parse(#{expr.inspect}).to_s excludes #{vstring}" do
-            range = Semantic::VersionRange.parse(expr)
-            range = Semantic::VersionRange.parse(range.to_s)
-            expect(range).to_not include(Semantic::Version.parse(vstring))
+            range = SemanticPuppet::VersionRange.parse(expr)
+            range = SemanticPuppet::VersionRange.parse(range.to_s)
+            expect(range).to_not include(SemanticPuppet::Version.parse(vstring))
           end
         end
       end
@@ -211,21 +211,21 @@ describe Semantic::VersionRange do
     context 'invalid expressions' do
       example 'raise an appropriate exception' do
         ex = [ ArgumentError, 'Unparsable version range: "invalid"' ]
-        expect { Semantic::VersionRange.parse('invalid') }.to raise_error(*ex)
+        expect { SemanticPuppet::VersionRange.parse('invalid') }.to raise_error(*ex)
       end
     end
   end
 
   describe '#intersection' do
     def self.v(num)
-      Semantic::Version.parse("#{num}.0.0")
+      SemanticPuppet::Version.parse("#{num}.0.0")
     end
 
     def self.range(x, y, ex = false)
-      Semantic::VersionRange.new(v(x), v(y), ex)
+      SemanticPuppet::VersionRange.new(v(x), v(y), ex)
     end
 
-    EMPTY_RANGE = Semantic::VersionRange::EMPTY_RANGE
+    EMPTY_RANGE = SemanticPuppet::VersionRange::EMPTY_RANGE
 
     tests = {
       # This falls entirely before the target range
@@ -299,7 +299,7 @@ describe Semantic::VersionRange do
     end
 
     it 'cannot intersect with non-VersionRanges' do
-      msg = "value must be a Semantic::VersionRange"
+      msg = "value must be a SemanticPuppet::VersionRange"
       expect { inclusive.intersection(1..2) }.to raise_error(msg)
     end
   end

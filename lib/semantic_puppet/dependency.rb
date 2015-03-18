@@ -1,15 +1,15 @@
-require 'semantic'
+require 'semantic_puppet'
 
-module Semantic
+module SemanticPuppet
   module Dependency
     extend self
 
-    autoload :Graph,         'semantic/dependency/graph'
-    autoload :GraphNode,     'semantic/dependency/graph_node'
-    autoload :ModuleRelease, 'semantic/dependency/module_release'
-    autoload :Source,        'semantic/dependency/source'
+    autoload :Graph,         'semantic_puppet/dependency/graph'
+    autoload :GraphNode,     'semantic_puppet/dependency/graph_node'
+    autoload :ModuleRelease, 'semantic_puppet/dependency/module_release'
+    autoload :Source,        'semantic_puppet/dependency/source'
 
-    autoload :UnsatisfiableGraph, 'semantic/dependency/unsatisfiable_graph'
+    autoload :UnsatisfiableGraph, 'semantic_puppet/dependency/unsatisfiable_graph'
 
     # @!group Sources
 
