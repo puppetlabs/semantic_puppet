@@ -22,7 +22,12 @@ module SemanticPuppet
         end
 
         prerelease = parse_prerelease(prerelease) if prerelease
-        build = parse_build_metadata(build) if build
+        # Build metadata is not yet supported in semantic_puppet, but we hope to.
+        # The following code prevents build metadata for now.
+        #build = parse_build_metadata(build) if build
+        if !build.nil?
+          raise "'#{ver}' MUST NOT include build identifiers"
+        end
 
         self.new(major.to_i, minor.to_i, patch.to_i, prerelease, build)
       end
