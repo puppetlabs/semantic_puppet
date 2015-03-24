@@ -1,10 +1,10 @@
 require 'spec_helper'
-require 'semantic/dependency/graph_node'
+require 'semantic_puppet/dependency/graph_node'
 
-describe Semantic::Dependency::GraphNode do
+describe SemanticPuppet::Dependency::GraphNode do
   let(:klass) do
     Class.new do
-      include Semantic::Dependency::GraphNode
+      include SemanticPuppet::Dependency::GraphNode
 
       attr_accessor :name
 

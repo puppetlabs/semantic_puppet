@@ -1,6 +1,6 @@
-require 'semantic/dependency'
+require 'semantic_puppet/dependency'
 
-module Semantic
+module SemanticPuppet
   module Dependency
     class ModuleRelease
       include GraphNode
@@ -9,10 +9,10 @@ module Semantic
 
       # Create a new instance of a module release.
       #
-      # @param source [Semantic::Dependency::Source]
+      # @param source [SemanticPuppet::Dependency::Source]
       # @param name [String]
-      # @param version [Semantic::Version]
-      # @param dependencies [{String => Semantic::VersionRange}]
+      # @param version [SemanticPuppet::Version]
+      # @param dependencies [{String => SemanticPuppet::VersionRange}]
       def initialize(source, name, version, dependencies = {})
         @source      = source
         @name        = name.freeze

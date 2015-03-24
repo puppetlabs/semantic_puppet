@@ -19,6 +19,6 @@ RSpec.configure do |config|
   config.order = 'random'
 
   config.before do
-    Semantic::Dependency.instance_variable_set(:@sources, nil)
+    SemanticPuppet::Dependency.instance_variable_set(:@sources, nil)
   end
 end

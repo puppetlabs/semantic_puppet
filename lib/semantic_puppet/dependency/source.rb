@@ -1,6 +1,6 @@
-require 'semantic/dependency'
+require 'semantic_puppet/dependency'
 
-module Semantic
+module SemanticPuppet
   module Dependency
     class Source
       def self.priority

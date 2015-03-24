@@ -1,9 +1,9 @@
 require 'spec_helper'
-require 'semantic/dependency/module_release'
+require 'semantic_puppet/dependency/module_release'
 
-describe Semantic::Dependency::ModuleRelease do
+describe SemanticPuppet::Dependency::ModuleRelease do
   def source
-    @source ||= Semantic::Dependency::Source.new
+    @source ||= SemanticPuppet::Dependency::Source.new
   end
 
   def make_release(name, version, deps = {})
