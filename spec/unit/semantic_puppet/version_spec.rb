@@ -167,6 +167,14 @@ describe SemanticPuppet::Version do
       end
 
       context 'Section 10' do
+        # Build metadata is not yet in scope so
+        it 'rejects build identifiers' do
+          ver = '1.2.3+anything'
+          expect { subject(ver) }.to raise_error("'#{ver}' MUST NOT include build identifiers")
+        end
+      end
+
+      context 'Section 10', :pending => "build metadata is not yet in scope" do
         # Build metadata MAY be denoted by appending a plus sign and a series
         # of dot separated identifiers immediately following the patch or
         # pre-release version. Identifiers MUST comprise only ASCII
@@ -492,6 +500,7 @@ describe SemanticPuppet::Version do
           end
 
           example 'build metadata does not figure into precendence' do
+            pending 'build metadata is not yet in scope'
             a = parse('1.0.0-alpha+SHA1')
             b = parse('1.0.0-alpha+MD5')
             expect(a).to eql b
@@ -576,8 +585,13 @@ describe SemanticPuppet::Version do
         expect(subject('1.1.1').next(:major)).to eql(subject('2.0.0'))
       end
 
-      it 'removes any prerelease or build information' do
-        expect(subject('1.0.0-alpha+abc').next(:major)).to eql(subject('2.0.0'))
+      it 'removes any prerelease information' do
+        expect(subject('1.0.0-alpha').next(:major)).to eql(subject('2.0.0'))
+      end
+
+      it 'removes any build information' do
+        pending 'build metadata is not yet in scope'
+        expect(subject('1.0.0+abc').next(:major)).to eql(subject('2.0.0'))
       end
     end
 
@@ -596,8 +610,13 @@ describe SemanticPuppet::Version do
         expect(subject('1.1.1').next(:minor)).to eql(subject('1.2.0'))
       end
 
-      it 'removes any prerelease or build information' do
-        expect(subject('1.1.0-alpha+abc').next(:minor)).to eql(subject('1.2.0'))
+      it 'removes any prerelease information' do
+        expect(subject('1.1.0-alpha').next(:minor)).to eql(subject('1.2.0'))
+      end
+
+      it 'removes any build information' do
+        pending 'build metadata is not yet in scope'
+        expect(subject('1.1.0+abc').next(:minor)).to eql(subject('1.2.0'))
       end
     end
 
@@ -612,8 +631,13 @@ describe SemanticPuppet::Version do
         expect(v1).to_not eql(v2)
       end
 
-      it 'removes any prerelease or build information' do
-        expect(subject('1.0.0-alpha+abc').next(:patch)).to eql(subject('1.0.1'))
+      it 'removes any prerelease information' do
+        expect(subject('1.0.0-alpha').next(:patch)).to eql(subject('1.0.1'))
+      end
+
+      it 'removes any build information' do
+        pending 'build metadata is not yet in scope'
+        expect(subject('1.0.0+abc').next(:patch)).to eql(subject('1.0.1'))
       end
     end
   end
