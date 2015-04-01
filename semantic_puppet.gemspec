@@ -11,6 +11,7 @@ spec = Gem::Specification.new do |s|
   s.homepage    = "https://github.com/puppetlabs/semantic_puppet-gem"
   s.summary     = "Useful tools for working with Semantic Versions."
   s.description = %q{Tools used by Puppet to parse, validate, and compare Semantic Versions and Version Ranges and to query and resolve module dependencies.}
+  s.licenses    = ['Apache-2.0']
 
   # Manifest
   s.files         = `git ls-files`.split("\n")
