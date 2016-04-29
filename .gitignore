@@ -1,3 +1,4 @@
+.bundle
 .rbenv-*
 .yardoc
 coverage

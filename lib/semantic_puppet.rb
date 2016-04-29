@@ -3,5 +3,5 @@ module SemanticPuppet
   autoload :VersionRange, 'semantic_puppet/version_range'
   autoload :Dependency, 'semantic_puppet/dependency'
 
-  VERSION = '0.1.1'
+  VERSION = '0.1.2'
 end
