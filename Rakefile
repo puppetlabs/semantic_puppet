@@ -50,20 +50,9 @@ rescue LoadError
   warn "[Warning]: Could not load `cane`."
 end
 
-# Gem tasks
+# Bundler tasks
 begin
-  require 'rubygems/tasks'
-
-  task :gem => 'gem:build'
-  task :validate => [ 'cane', 'doc', 'gem:validate' ]
-
-  namespace :gem do
-    Gem::Tasks.new(
-      :tag => { :format => 'v%s' },
-      :sign => { :checksum => true, :pgp => true },
-      :build => { :tar => true }
-    )
-  end
+  require "bundler/gem_tasks"
 rescue LoadError
-  warn "[Warning]: Could not load `rubygems/tasks`."
+  warn "[Warning]: Could not load `bundler/gem_tasks`."
 end

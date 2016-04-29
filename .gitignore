@@ -5,3 +5,4 @@ coverage
 doc
 .idea/
 /.project
+Gemfile.lock
