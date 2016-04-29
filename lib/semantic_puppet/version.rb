@@ -115,6 +115,16 @@ module SemanticPuppet
       return compare_prerelease(other)
     end
 
+    def eql?(other)
+      other.is_a?(Version) &&
+        @major.eql?(other.major) &&
+        @minor.eql?(other.minor) &&
+        @patch.eql?(other.patch) &&
+        @prerelease.eql?(other.instance_variable_get(:@prerelease)) &&
+        @build.eql?(other.instance_variable_get(:@build))
+    end
+    alias == eql?
+
     def to_s
       "#{major}.#{minor}.#{patch}" +
       (@prerelease.nil? || prerelease.empty? ? '' : "-" + prerelease) +

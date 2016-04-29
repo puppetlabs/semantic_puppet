@@ -411,6 +411,47 @@ describe SemanticPuppet::Version do
     end
   end
 
+  describe '#==' do
+    def parse(vstring)
+      SemanticPuppet::Version.parse(vstring)
+    end
+
+    it 'should yield true when comparing two equal instances' do
+      x = parse('1.2.3-alpha')
+      y = parse('1.2.3-alpha')
+      expect(x == y).to eql(true)
+    end
+
+    it 'should yield false when the major differs' do
+      x = parse('1.2.3-alpha')
+      y = parse('2.2.3-alpha')
+      expect(x == y).to eql(false)
+    end
+
+    it 'should yield false when the minor differs' do
+      x = parse('1.2.3-alpha')
+      y = parse('1.3.3-alpha')
+      expect(x == y).to eql(false)
+    end
+
+    it 'should yield false when the patch differs' do
+      x = parse('1.2.3-alpha')
+      y = parse('1.2.4-alpha')
+      expect(x == y).to eql(false)
+    end
+
+    it 'should yield false when the prerelease differs' do
+      x = parse('1.2.3-alpha')
+      y = parse('1.2.3-beta')
+      expect(x == y).to eql(false)
+    end
+
+    it 'should yield false when compared to something that is not a Version' do
+      x = parse('1.2.3-alpha')
+      expect(x == :undef).to eql(false)
+    end
+  end
+
   describe '#<=>' do
     def parse(vstring)
       SemanticPuppet::Version.parse(vstring)
