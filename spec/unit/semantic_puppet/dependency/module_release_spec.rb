@@ -84,6 +84,29 @@ describe SemanticPuppet::Dependency::ModuleRelease do
 
   end
 
+  describe '#==' do
+
+    it 'considers two equal releases to be equal' do
+      expect(make_release('foo', '1.0.0')).to eql(make_release('foo', '1.0.0'))
+    end
+
+    it 'considers two releases with different names to be different' do
+      expect(make_release('foo', '1.0.0')).not_to eql(make_release('bar', '1.0.0'))
+    end
+
+    it 'considers two releases with different versions to be different' do
+      expect(make_release('foo', '1.0.0')).not_to eql(make_release('foo', '1.0.1'))
+    end
+
+    it 'can compare a release with something that is not a release' do
+      expect { make_release('foo', '1.0.0') == 5 }.not_to raise_error
+    end
+
+    it 'considers a release differnt from something that is not a release' do
+      expect(make_release('foo', '1.0.0') == 5).to be_falsey
+    end
+  end
+
   describe '#satisfied?' do
 
     it 'returns true when there are no dependencies to satisfy' do
