@@ -102,8 +102,8 @@ describe SemanticPuppet::Dependency::ModuleRelease do
       expect { make_release('foo', '1.0.0') == 5 }.not_to raise_error
     end
 
-    it 'considers a release differnt from something that is not a release' do
-      expect(make_release('foo', '1.0.0') == 5).to be_falsey
+    it 'considers a release different from something that is not a release' do
+      expect(make_release('foo', '1.0.0') == 5).to be false
     end
   end
 
