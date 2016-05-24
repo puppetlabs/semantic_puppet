@@ -38,6 +38,18 @@ module SemanticPuppet
         return our_key <=> their_key
       end
 
+      def eql?(other)
+        other.is_a?(ModuleRelease) &&
+          @name.eql?(other.name) &&
+          @version.eql?(other.version) &&
+          dependencies.eql?(other.dependencies)
+      end
+      alias == eql?
+
+      def hash
+        @name.hash ^ @version.hash
+      end
+
       def to_s
         "#<#{self.class} #{name}@#{version}>"
       end
