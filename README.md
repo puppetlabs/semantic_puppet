@@ -62,3 +62,12 @@ Contributors
 
 Pieter van de Bruggen wrote the library originally, with additions by Alex
 Dreyer, Jesse Scott and Anderson Mills.
+
+## Maintenance
+
+Maintainers:
+
+* Jesse Scott, jesse@puppet.com
+* Anderson Mills, anderson@puppet.com
+
+Tickets: File at https://tickets.puppet.com/browse/FORGE
