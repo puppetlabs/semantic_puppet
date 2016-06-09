@@ -70,4 +70,4 @@ Maintainers:
 * Jesse Scott, jesse@puppet.com
 * Anderson Mills, anderson@puppet.com
 
-Tickets: File at https://tickets.puppet.com/browse/CODEMGMT
+Tickets: File at https://tickets.puppet.com/browse/FORGE
