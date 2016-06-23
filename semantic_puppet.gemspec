@@ -1,6 +1,6 @@
 # -*- encoding: utf-8 -*-
 $:.push File.expand_path("../lib", __FILE__)
-require "semantic_puppet"
+require "semantic_puppet/gem_version"
 
 spec = Gem::Specification.new do |s|
   # Metadata
@@ -21,6 +21,8 @@ spec = Gem::Specification.new do |s|
 
   # Dependencies
   s.required_ruby_version = '>= 1.8.7'
+
+  s.add_dependency "gettext-setup", ">= 0.3"
 
   s.add_development_dependency "rake"
   s.add_development_dependency "rspec"

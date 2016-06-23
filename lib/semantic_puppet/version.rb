@@ -18,7 +18,7 @@ module SemanticPuppet
         match, major, minor, patch, prerelease, build = *ver.match(/\A#{REGEX_FULL}\Z/)
 
         if match.nil?
-          raise "Unable to parse '#{ver}' as a semantic version identifier"
+          raise _("Unable to parse '%{version}' as a semantic version identifier") % {version: ver}
         end
 
         prerelease = parse_prerelease(prerelease) if prerelease
@@ -26,7 +26,7 @@ module SemanticPuppet
         # The following code prevents build metadata for now.
         #build = parse_build_metadata(build) if build
         if !build.nil?
-          raise "'#{ver}' MUST NOT include build identifiers"
+          raise _("'%{version}' MUST NOT include build identifiers") % {version: ver}
         end
 
         self.new(major.to_i, minor.to_i, patch.to_i, prerelease, build)
@@ -46,11 +46,11 @@ module SemanticPuppet
         prerelease = prerelease.split('.', -1)
 
         if prerelease.empty? or prerelease.any? { |x| x.empty? }
-          raise "#{subject} MUST NOT be empty"
+          raise _("%{subject} MUST NOT be empty") % {subject: subject}
         elsif prerelease.any? { |x| x =~ /[^0-9a-zA-Z-]/ }
-          raise "#{subject} MUST use only ASCII alphanumerics and hyphens"
+          raise _("%{subject} MUST use only ASCII alphanumerics and hyphens") % {subject: subject}
         elsif prerelease.any? { |x| x =~ /^0\d+$/ }
-          raise "#{subject} MUST NOT contain leading zeroes"
+          raise _("%{subject} MUST NOT contain leading zeroes") % {subject: subject}
         end
 
         return prerelease.map { |x| x =~ /^\d+$/ ? x.to_i : x }
@@ -61,9 +61,9 @@ module SemanticPuppet
         build = build.split('.', -1)
 
         if build.empty? or build.any? { |x| x.empty? }
-          raise "#{subject} MUST NOT be empty"
+          raise _("%{subject} MUST NOT be empty") % {subject: subject}
         elsif build.any? { |x| x =~ /[^0-9a-zA-Z-]/ }
-          raise "#{subject} MUST use only ASCII alphanumerics and hyphens"
+          raise _("%{subject} MUST use only ASCII alphanumerics and hyphens") % {subject: subject}
         end
 
         return build
