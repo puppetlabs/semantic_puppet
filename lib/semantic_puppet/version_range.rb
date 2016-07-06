@@ -46,7 +46,7 @@ module SemanticPuppet
         end
 
       rescue ArgumentError
-        raise ArgumentError, "Unparsable version range: #{range_str.inspect}"
+        raise ArgumentError, _("Unparsable version range: %{range}") % {range: range_str.inspect}
       end
 
       private

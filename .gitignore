@@ -6,3 +6,4 @@ doc
 .idea/
 /.project
 Gemfile.lock
+locales/semantic_puppet.pot
