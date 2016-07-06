@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 0.1.4 - 2016-07-06
+### Changed
+- Externalized all user-facing strings using gettext libraries to support future localization.
+
 ## 0.1.3 - 2016-05-24
 ### Added
 - Typesafe implementation of ModuleRelease#eql? (and ModuleRelease#==). (PUP-6341)
