@@ -14,26 +14,26 @@ describe SemanticPuppet::VersionRange do
         includes.each do |vstring|
           example "#{expr.inspect} includes #{vstring}" do
             range = SemanticPuppet::VersionRange.parse(expr)
-            expect(range).to include(SemanticPuppet::Version.parse(vstring))
+            expect(range).to cover(SemanticPuppet::Version.parse(vstring))
           end
 
           example "parse(#{expr.inspect}).to_s includes #{vstring}" do
             range = SemanticPuppet::VersionRange.parse(expr)
             range = SemanticPuppet::VersionRange.parse(range.to_s)
-            expect(range).to include(SemanticPuppet::Version.parse(vstring))
+            expect(range).to cover(SemanticPuppet::Version.parse(vstring))
           end
         end
 
         excludes.each do |vstring|
           example "#{expr.inspect} excludes #{vstring}" do
             range = SemanticPuppet::VersionRange.parse(expr)
-            expect(range).to_not include(SemanticPuppet::Version.parse(vstring))
+            expect(range).to_not cover(SemanticPuppet::Version.parse(vstring))
           end
 
           example "parse(#{expr.inspect}).to_s excludes #{vstring}" do
             range = SemanticPuppet::VersionRange.parse(expr)
             range = SemanticPuppet::VersionRange.parse(range.to_s)
-            expect(range).to_not include(SemanticPuppet::Version.parse(vstring))
+            expect(range).to_not cover(SemanticPuppet::Version.parse(vstring))
           end
         end
       end
