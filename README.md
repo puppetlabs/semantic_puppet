@@ -50,7 +50,7 @@ Usage
 
 SemanticPuppet is intended to be used as a library. 
 
-### Verison Range Operator Support
+### Version Range Operator Support
 
 SemanticPuppet will support the same version range operators as those used when
 publishing modules to [Puppet Forge](https://forge.puppetlabs.com) which is
