@@ -9,6 +9,14 @@ describe SemanticPuppet::Version do
 
   describe '.parse' do
 
+    let(:parse_failure) do
+      /Unable to parse .* as a semantic version identifier/
+    end
+
+    let(:no_leading_zeroes) do
+      'Numeric pre-release identifiers MUST NOT contain leading zeroes'
+    end
+
     context 'Spec v2.0.0' do
       context 'Section 2' do
         # A normal version number MUST take the form X.Y.Z where X, Y, and Z are
@@ -16,10 +24,6 @@ describe SemanticPuppet::Version do
         # major version, Y is the minor version, and Z is the patch version.
         # Each element MUST increase numerically.
         # For instance: 1.9.0 -> 1.10.0 -> 1.11.0.
-
-        let(:parse_failure) do
-          /Unable to parse .* as a semantic version identifier/
-        end
 
         it 'rejects versions that contain too few parts' do
           expect { subject('1.2') }.to raise_error(parse_failure)
@@ -89,31 +93,19 @@ describe SemanticPuppet::Version do
         # by its associated normal version.
         # Examples: 1.0.0-alpha, 1.0.0-alpha.1, 1.0.0-0.3.7, 1.0.0-x.7.z.92.
 
-        let(:restricted_charset) do
-          'Prerelease identifiers MUST use only ASCII alphanumerics and hyphens'
-        end
-
-        let(:must_not_be_empty) do
-          'Prerelease identifiers MUST NOT be empty'
-        end
-
-        let(:no_leading_zeroes) do
-          'Prerelease identifiers MUST NOT contain leading zeroes'
-        end
-
         it 'rejects prerelease identifiers with non-alphanumerics' do
-          expect { subject('1.2.3-$100') }.to raise_error(restricted_charset)
-          expect { subject('1.2.3-rc.1@me') }.to raise_error(restricted_charset)
+          expect { subject('1.2.3-$100') }.to raise_error(parse_failure)
+          expect { subject('1.2.3-rc.1@me') }.to raise_error(parse_failure)
         end
 
         it 'rejects empty prerelease versions' do
-          expect { subject('1.2.3-') }.to raise_error(must_not_be_empty)
+          expect { subject('1.2.3-') }.to raise_error(parse_failure)
         end
 
         it 'rejects empty prerelease version identifiers' do
-          expect { subject('1.2.3-.rc1') }.to raise_error(must_not_be_empty)
-          expect { subject('1.2.3-rc1.') }.to raise_error(must_not_be_empty)
-          expect { subject('1.2.3-rc..1') }.to raise_error(must_not_be_empty)
+          expect { subject('1.2.3-.rc1') }.to raise_error(parse_failure)
+          expect { subject('1.2.3-rc1.') }.to raise_error(parse_failure)
+          expect { subject('1.2.3-rc..1') }.to raise_error(parse_failure)
         end
 
         it 'rejects numeric prerelease identifiers with leading zeroes' do
@@ -167,14 +159,6 @@ describe SemanticPuppet::Version do
       end
 
       context 'Section 10' do
-        # Build metadata is not yet in scope so
-        it 'rejects build identifiers' do
-          ver = '1.2.3+anything'
-          expect { subject(ver) }.to raise_error("'#{ver}' MUST NOT include build identifiers")
-        end
-      end
-
-      context 'Section 10', :pending => "build metadata is not yet in scope" do
         # Build metadata MAY be denoted by appending a plus sign and a series
         # of dot separated identifiers immediately following the patch or
         # pre-release version. Identifiers MUST comprise only ASCII
@@ -185,28 +169,19 @@ describe SemanticPuppet::Version do
         # Examples: 1.0.0-alpha+001, 1.0.0+20130313144700,
         # 1.0.0-beta+exp.sha.5114f85.
 
-
-        let(:restricted_charset) do
-          'Build identifiers MUST use only ASCII alphanumerics and hyphens'
-        end
-
-        let(:must_not_be_empty) do
-          'Build identifiers MUST NOT be empty'
-        end
-
         it 'rejects build identifiers with non-alphanumerics' do
-          expect { subject('1.2.3+$100') }.to raise_error(restricted_charset)
-          expect { subject('1.2.3+rc.1@me') }.to raise_error(restricted_charset)
+          expect { subject('1.2.3+$100') }.to raise_error(parse_failure)
+          expect { subject('1.2.3+rc.1@me') }.to raise_error(parse_failure)
         end
 
         it 'rejects empty build metadata' do
-          expect { subject('1.2.3+') }.to raise_error(must_not_be_empty)
+          expect { subject('1.2.3+') }.to raise_error(parse_failure)
         end
 
         it 'rejects empty build identifiers' do
-          expect { subject('1.2.3+.rc1') }.to raise_error(must_not_be_empty)
-          expect { subject('1.2.3+rc1.') }.to raise_error(must_not_be_empty)
-          expect { subject('1.2.3+rc..1') }.to raise_error(must_not_be_empty)
+          expect { subject('1.2.3+.rc1') }.to raise_error(parse_failure)
+          expect { subject('1.2.3+rc1.') }.to raise_error(parse_failure)
+          expect { subject('1.2.3+rc..1') }.to raise_error(parse_failure)
         end
 
         it 'permits numeric build identifiers with leading zeroes' do
@@ -263,10 +238,6 @@ describe SemanticPuppet::Version do
         # increments of one.
         # For instance: 1.9.0 -> 1.10.0 -> 1.11.0
 
-        let(:parse_failure) do
-          /Unable to parse .* as a semantic version identifier/
-        end
-
         it 'rejects versions that contain too few parts' do
           expect { subject('1.2') }.to raise_error(parse_failure)
         end
@@ -320,25 +291,13 @@ describe SemanticPuppet::Version do
         # lexicographic ASCII sort order.
         # For instance: 1.0.0-alpha1 < 1.0.0-beta1 < 1.0.0-beta2 < 1.0.0-rc1
 
-        let(:restricted_charset) do
-          'Prerelease identifiers MUST use only ASCII alphanumerics and hyphens'
-        end
-
-        let(:must_not_be_empty) do
-          'Prerelease identifiers MUST NOT be empty'
-        end
-
-        let(:no_leading_zeroes) do
-          'Prerelease identifiers MUST NOT contain leading zeroes'
-        end
-
         it 'rejects prerelease identifiers with non-alphanumerics' do
-          expect { subject('1.2.3-$100') }.to raise_error(restricted_charset)
-          expect { subject('1.2.3-rc.1@me') }.to raise_error(restricted_charset)
+          expect { subject('1.2.3-$100') }.to raise_error(parse_failure)
+          expect { subject('1.2.3-rc.1@me') }.to raise_error(parse_failure)
         end
 
         it 'rejects empty prerelease versions' do
-          expect { subject('1.2.3-') }.to raise_error(must_not_be_empty)
+          expect { subject('1.2.3-') }.to raise_error(parse_failure)
         end
 
         it 'rejects numeric prerelease identifiers with leading zeroes' do
@@ -540,12 +499,17 @@ describe SemanticPuppet::Version do
             expect(b).to be > a
           end
 
-          example 'build metadata does not figure into precendence' do
-            pending 'build metadata is not yet in scope'
+          example 'build metadata does figure into equality' do
             a = parse('1.0.0-alpha+SHA1')
             b = parse('1.0.0-alpha+MD5')
-            expect(a).to eql b
+            expect(a).not_to eql b
             expect(a.to_s).to_not eql b.to_s
+          end
+
+          example 'build metadata does not figure into precendence' do
+            a = parse('1.0.0-alpha+SHA1')
+            b = parse('1.0.0-alpha+MD5')
+            expect(a <=> b).to eql(0)
           end
 
           example 'sorted order' do
@@ -631,7 +595,6 @@ describe SemanticPuppet::Version do
       end
 
       it 'removes any build information' do
-        pending 'build metadata is not yet in scope'
         expect(subject('1.0.0+abc').next(:major)).to eql(subject('2.0.0'))
       end
     end
@@ -656,7 +619,6 @@ describe SemanticPuppet::Version do
       end
 
       it 'removes any build information' do
-        pending 'build metadata is not yet in scope'
         expect(subject('1.1.0+abc').next(:minor)).to eql(subject('1.2.0'))
       end
     end
@@ -677,7 +639,6 @@ describe SemanticPuppet::Version do
       end
 
       it 'removes any build information' do
-        pending 'build metadata is not yet in scope'
         expect(subject('1.0.0+abc').next(:patch)).to eql(subject('1.0.1'))
       end
     end

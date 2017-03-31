@@ -1,7 +1,6 @@
 require 'semantic_puppet'
 
 module SemanticPuppet
-
   # @note SemanticPuppet::Version subclasses Numeric so that it has sane Range
   #       semantics in Ruby 1.9+.
   class Version < Numeric
@@ -9,69 +8,46 @@ module SemanticPuppet
 
     class ValidationFailure < ArgumentError; end
 
-    class << self
-      # Parse a Semantic Version string.
-      #
-      # @param ver [String] the version string to parse
-      # @return [Version] a comparable {Version} object
-      def parse(ver)
-        match, major, minor, patch, prerelease, build = *ver.match(/\A#{REGEX_FULL}\Z/)
+    # Parse a Semantic Version string.
+    #
+    # @param ver [String] the version string to parse
+    # @return [Version] a comparable {Version} object
+    def self.parse(ver)
+      match, major, minor, patch, prerelease, build = *ver.match(REGEX_FULL_RX)
 
-        if match.nil?
-          raise _("Unable to parse '%{version}' as a semantic version identifier") % {version: ver}
+      raise ValidationFailure, _("Unable to parse '%{version}' as a semantic version identifier") % {version: ver} unless match
+
+      new(major.to_i, minor.to_i, patch.to_i, parse_prerelease(prerelease), parse_build(build)).freeze
+    end
+
+    # Validate a Semantic Version string.
+    #
+    # @param ver [String] the version string to validate
+    # @return [bool] whether or not the string represents a valid Semantic Version
+    def self.valid?(ver)
+      match = ver.match(REGEX_FULL_RX)
+      if match.nil?
+        false
+      else
+        prerelease = match[4]
+        prerelease.nil? || prerelease.split('.').all? { |x| !(x =~ /^0\d+/) }
+      end
+    end
+
+    def self.parse_build(build)
+      build.nil? ? nil : build.split('.').freeze
+    end
+
+    def self.parse_prerelease(prerelease)
+      return nil unless prerelease
+      prerelease.split('.').map do |x|
+        if x =~ /^\d+$/
+          raise ValidationFailure, _('Numeric pre-release identifiers MUST NOT contain leading zeroes') if x.length > 1 && x.start_with?('0')
+          x.to_i
+        else
+          x
         end
-
-        prerelease = parse_prerelease(prerelease) if prerelease
-        # Build metadata is not yet supported in semantic_puppet, but we hope to.
-        # The following code prevents build metadata for now.
-        #build = parse_build_metadata(build) if build
-        if !build.nil?
-          raise _("'%{version}' MUST NOT include build identifiers") % {version: ver}
-        end
-
-        self.new(major.to_i, minor.to_i, patch.to_i, prerelease, build)
-      end
-
-      # Validate a Semantic Version string.
-      #
-      # @param ver [String] the version string to validate
-      # @return [bool] whether or not the string represents a valid Semantic Version
-      def valid?(ver)
-        !!(ver =~ /\A#{REGEX_FULL}\Z/)
-      end
-
-      private
-      def parse_prerelease(prerelease)
-        subject = 'Prerelease identifiers'
-        prerelease = prerelease.split('.', -1)
-
-        if prerelease.empty? or prerelease.any? { |x| x.empty? }
-          raise _("%{subject} MUST NOT be empty") % {subject: subject}
-        elsif prerelease.any? { |x| x =~ /[^0-9a-zA-Z-]/ }
-          raise _("%{subject} MUST use only ASCII alphanumerics and hyphens") % {subject: subject}
-        elsif prerelease.any? { |x| x =~ /^0\d+$/ }
-          raise _("%{subject} MUST NOT contain leading zeroes") % {subject: subject}
-        end
-
-        return prerelease.map { |x| x =~ /^\d+$/ ? x.to_i : x }
-      end
-
-      def parse_build_metadata(build)
-        subject = 'Build identifiers'
-        build = build.split('.', -1)
-
-        if build.empty? or build.any? { |x| x.empty? }
-          raise _("%{subject} MUST NOT be empty") % {subject: subject}
-        elsif build.any? { |x| x =~ /[^0-9a-zA-Z-]/ }
-          raise _("%{subject} MUST use only ASCII alphanumerics and hyphens") % {subject: subject}
-        end
-
-        return build
-      end
-
-      def raise(msg)
-        super ValidationFailure, msg, caller.drop_while { |x| x !~ /\bparse\b/ }
-      end
+      end.freeze
     end
 
     attr_reader :major, :minor, :patch
@@ -96,23 +72,31 @@ module SemanticPuppet
     end
 
     def prerelease
-      @prerelease && @prerelease.join('.')
+      @prerelease.nil? || @prerelease.empty? ? nil : @prerelease.join('.')
     end
 
     # @return [Boolean] true if this is a stable release
     def stable?
-      @prerelease.nil?
+      @prerelease.nil? || @prerelease.empty?
     end
 
     def build
-      @build && @build.join('.')
+      @build.nil? || @build.empty? ? nil : @build.join('.')
     end
 
     def <=>(other)
-      return self.major <=> other.major unless self.major == other.major
-      return self.minor <=> other.minor unless self.minor == other.minor
-      return self.patch <=> other.patch unless self.patch == other.patch
-      return compare_prerelease(other)
+      return nil unless other.is_a?(Version)
+      cmp = @major <=> other.major
+      if cmp == 0
+        cmp = @minor <=> other.minor
+        if cmp == 0
+          cmp = @patch <=> other.patch
+          if cmp == 0
+            cmp = compare_prerelease(other)
+          end
+        end
+      end
+      cmp
     end
 
     def eql?(other)
@@ -126,70 +110,65 @@ module SemanticPuppet
     alias == eql?
 
     def to_s
-      "#{major}.#{minor}.#{patch}" +
-      (@prerelease.nil? || prerelease.empty? ? '' : "-" + prerelease) +
-      (@build.nil?      || build.empty?      ? '' : "+" + build     )
+      s = "#{@major}.#{@minor}.#{@patch}"
+      unless @prerelease.nil? || @prerelease.empty?
+        s << '-'
+        @prerelease.each { |p| s << p.to_s << '.' }
+        s.chomp!('.')
+      end
+      unless @build.nil? || @build.empty?
+        s << '+'
+        @build.each { |p| s << p.to_s << '.' }
+        s.chomp!('.')
+      end
+      s
     end
+    alias inspect to_s
 
     def hash
-      self.to_s.hash
+      (((((@major * 0x100) ^ @minor) * 0x100) ^ @patch) * 0x100) ^ @prerelease.hash
     end
 
-    private
-    # This is a hack; tildes sort later than any valid identifier. The
-    # advantage is that we don't need to handle stable vs. prerelease
-    # comparisons separately.
-    @@STABLE_RELEASE = [ '~' ].freeze
-
     def compare_prerelease(other)
-      all_mine  = @prerelease                               || @@STABLE_RELEASE
-      all_yours = other.instance_variable_get(:@prerelease) || @@STABLE_RELEASE
-
-      # Precedence is determined by comparing each dot separated identifier from
-      # left to right...
-      size = [ all_mine.size, all_yours.size ].max
-      Array.new(size).zip(all_mine, all_yours) do |_, mine, yours|
-
-        # ...until a difference is found.
-        next if mine == yours
-
-        # Numbers are compared numerically, strings are compared ASCIIbetically.
-        if mine.class == yours.class
-          return mine <=> yours
-
-        # A larger set of pre-release fields has a higher precedence.
-        elsif mine.nil?
-          return -1
-        elsif yours.nil?
-          return 1
-
-        # Numeric identifiers always have lower precedence than non-numeric.
-        elsif mine.is_a? Numeric
-          return -1
-        elsif yours.is_a? Numeric
-          return 1
+      mine = @prerelease
+      yours = other.instance_variable_get(:@prerelease)
+      if mine.nil?
+        yours.nil? ? 0 : 1
+      elsif yours.nil?
+        -1
+      else
+        your_max = yours.size
+        mine.each_with_index do |x, idx|
+          return 1 if idx >= your_max
+          y = yours[idx]
+          cmp = if x.is_a?(Integer)
+            y.is_a?(Integer) ? x <=> y : -1
+          elsif y.is_a?(Integer)
+            1
+          else
+            x <=> y
+          end
+          return cmp unless cmp == 0
         end
+        mine.size <=> your_max
       end
-
-      return 0
     end
 
     def first_prerelease
       self.class.new(@major, @minor, @patch, [])
     end
 
-    public
-
     # Version string matching regexes
-    REGEX_NUMERIC = "(0|[1-9]\\d*)[.](0|[1-9]\\d*)[.](0|[1-9]\\d*)" # Major . Minor . Patch
-    REGEX_PRE     = "(?:[-](.*?))?"            # Prerelease
-    REGEX_BUILD   = "(?:[+](.*?))?"            # Build
-    REGEX_FULL    = REGEX_NUMERIC + REGEX_PRE + REGEX_BUILD
+    REGEX_NUMERIC = '(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)'.freeze # Major . Minor . Patch
+    REGEX_PRE     = '(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?'.freeze    # Prerelease
+    REGEX_BUILD   = '(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?'.freeze  # Build
+    REGEX_FULL    = REGEX_NUMERIC + REGEX_PRE + REGEX_BUILD.freeze
+    REGEX_FULL_RX = /\A#{REGEX_FULL}\Z/.freeze
 
     # The lowest precedence Version possible
-    MIN = self.new(0, 0, 0, []).freeze
+    MIN = self.new(0, 0, 0, [].freeze).freeze
 
     # The highest precedence Version possible
-    MAX = self.new((1.0/0.0), 0, 0).freeze
+    MAX = self.new(Float::INFINITY, 0, 0).freeze
   end
 end
