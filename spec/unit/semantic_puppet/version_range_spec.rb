@@ -48,18 +48,18 @@ describe SemanticPuppet::VersionRange do
         },
         [ '1.2.3' ] => {
           :to_str   => '1.2.3',
-          :includes => [ '1.2.3-alpha', '1.2.3' ],
-          :excludes => [ '1.2.2', '1.2.4-alpha' ],
+          :includes => [ '1.2.3' ],
+          :excludes => [ '1.2.2', '1.2.3-alpha', '1.2.4-alpha' ],
         },
         [ '1.2', '1.2.x', '1.2.X' ] => {
-          :to_str   => '1.2.x',
-          :includes => [ '1.2.0-alpha', '1.2.0', '1.2.999' ],
-          :excludes => [ '1.1.999', '1.3.0-0' ],
+          :to_str   => '>=1.2.0 <1.3.0',
+          :includes => [ '1.2.0', '1.2.999' ],
+          :excludes => [ '1.1.999', '1.2.0-alpha', '1.3.0-0' ],
         },
         [ '1', '1.x', '1.X' ] => {
-          :to_str   => '1.x',
-          :includes => [ '1.0.0-alpha', '1.999.0' ],
-          :excludes => [ '0.999.999', '2.0.0-0' ],
+          :to_str   => '>=1.0.0 <2.0.0',
+          :includes => [ '1.0.0', '1.999.0' ],
+          :excludes => [ '0.999.999', '1.0.0-alpha', '2.0.0-0' ],
         },
       }
 
@@ -71,9 +71,9 @@ describe SemanticPuppet::VersionRange do
     context 'open-ended expressions' do
       expressions = {
         [ '>1.2.3', '> 1.2.3' ] => {
-          :to_str   => '>=1.2.4',
-          :includes => [ '1.2.4-0', '999.0.0' ],
-          :excludes => [ '1.2.3' ],
+          :to_str   => '>1.2.3',
+          :includes => [ '999.0.0' ],
+          :excludes => [ '1.2.3', '1.2.4-0' ],
         },
         [ '>1.2.3-alpha', '> 1.2.3-alpha' ] => {
           :to_str   => '>1.2.3-alpha',
@@ -83,35 +83,35 @@ describe SemanticPuppet::VersionRange do
 
         [ '>=1.2.3', '>= 1.2.3' ] => {
           :to_str   => '>=1.2.3',
-          :includes => [ '1.2.3-0', '999.0.0' ],
-          :excludes => [ '1.2.2' ],
+          :includes => [ '999.0.0' ],
+          :excludes => [ '1.2.2', '1.2.3-0' ],
         },
         [ '>=1.2.3-alpha', '>= 1.2.3-alpha' ] => {
           :to_str   => '>=1.2.3-alpha',
           :includes => [ '1.2.3-alpha', '1.2.3-alpha0', '999.0.0' ],
-          :excludes => [ '1.2.3-alph' ],
+          :excludes => [ '1.2.3-alph', '1.2.4-alpha' ],
         },
 
         [ '<1.2.3', '< 1.2.3' ] => {
           :to_str   => '<1.2.3',
-          :includes => [ '0.0.0-0', '1.2.2' ],
-          :excludes => [ '1.2.3-0', '2.0.0' ],
+          :includes => [ '0.0.0', '1.2.2' ],
+          :excludes => [ '0.0.0-0', '1.2.3-0', '2.0.0' ],
         },
         [ '<1.2.3-alpha', '< 1.2.3-alpha' ] => {
           :to_str   => '<1.2.3-alpha',
-          :includes => [ '0.0.0-0', '1.2.3-alph' ],
-          :excludes => [ '1.2.3-alpha', '2.0.0' ],
+          :includes => [ '0.0.0', '1.2.3-alph' ],
+          :excludes => [ '0.0.0-0', '1.2.3-alpha', '2.0.0' ],
         },
 
         [ '<=1.2.3', '<= 1.2.3' ] => {
-          :to_str   => '<1.2.4',
-          :includes => [ '0.0.0-0', '1.2.3' ],
-          :excludes => [ '1.2.4-0' ],
+          :to_str   => '<=1.2.3',
+          :includes => [ '0.0.0', '1.2.3' ],
+          :excludes => [ '0.0.0-0', '1.2.3-0' ],
         },
         [ '<=1.2.3-alpha', '<= 1.2.3-alpha' ] => {
           :to_str   => '<=1.2.3-alpha',
-          :includes => [ '0.0.0-0', '1.2.3-alpha' ],
-          :excludes => [ '1.2.3-alpha0', '1.2.3-alpha.0', '1.2.3-alpha'.next ],
+          :includes => [ '0.0.0', '1.2.3-alpha' ],
+          :excludes => [ '0.0.0-0', '1.2.3-alpha0', '1.2.3-alpha.0', '1.2.3-alpha'.next ],
         },
       }
 
@@ -123,22 +123,22 @@ describe SemanticPuppet::VersionRange do
     context '"reasonably close" expressions' do
       expressions = {
         [ '~ 1', '~1' ] => {
-          :to_str   => '1.x',
-          :includes => [ '1.0.0-0', '1.999.999' ],
-          :excludes => [ '0.999.999', '2.0.0-0' ],
+          :to_str   => '>=1.0.0 <2.0.0',
+          :includes => [ '1.0.0', '1.999.999' ],
+          :excludes => [ '0.999.999', '1.0.0-0', '2.0.0-0' ],
         },
         [ '~ 1.2', '~1.2' ] => {
-          :to_str   => '1.2.x',
-          :includes => [ '1.2.0-0', '1.2.999' ],
-          :excludes => [ '1.1.999', '1.3.0-0' ],
+          :to_str   => '>=1.2.0 <1.3.0',
+          :includes => [ '1.2.0', '1.2.999' ],
+          :excludes => [ '1.1.999', '1.2.0-0', '1.3.0-0' ],
         },
         [ '~ 1.2.3', '~1.2.3' ] => {
           :to_str   => '>=1.2.3 <1.3.0',
-          :includes => [ '1.2.3-0', '1.2.5' ],
-          :excludes => [ '1.2.2', '1.3.0-0' ],
+          :includes => [ '1.2.3', '1.2.5' ],
+          :excludes => [ '1.2.2', '1.2.3-0', '1.3.0-0' ],
         },
         [ '~ 1.2.3-alpha', '~1.2.3-alpha' ] => {
-          :to_str   => '>=1.2.3-alpha <1.2.4',
+          :to_str   => '>=1.2.3-alpha <1.3.0',
           :includes => [ '1.2.3-alpha', '1.2.3' ],
           :excludes => [ '1.2.3-alph', '1.2.4-0' ],
         },
@@ -152,18 +152,18 @@ describe SemanticPuppet::VersionRange do
     context 'inclusive range expressions' do
       expressions = {
         '1.2.3 - 1.3.4' => {
-          :to_str   => '>=1.2.3 <1.3.5',
-          :includes => [ '1.2.3-0', '1.3.4' ],
-          :excludes => [ '1.2.2', '1.3.5-0' ],
+          :to_str   => '>=1.2.3 <=1.3.4',
+          :includes => [ '1.2.3', '1.3.4' ],
+          :excludes => [ '1.2.2', '1.2.3-0', '1.3.5-0' ],
         },
         '1.2.3 - 1.3.4-alpha' => {
           :to_str   => '>=1.2.3 <=1.3.4-alpha',
-          :includes => [ '1.2.3-0', '1.3.4-alpha' ],
-          :excludes => [ '1.2.2', '1.3.4-alpha0', '1.3.5' ],
+          :includes => [ '1.2.3', '1.3.4-alpha' ],
+          :excludes => [ '1.2.2', '1.2.3-0', '1.3.4-alpha0', '1.3.5' ],
         },
 
         '1.2.3-alpha - 1.3.4' => {
-          :to_str   => '>=1.2.3-alpha <1.3.5',
+          :to_str   => '>=1.2.3-alpha <=1.3.4',
           :includes => [ '1.2.3-alpha', '1.3.4' ],
           :excludes => [ '1.2.3-alph', '1.3.5-0' ],
         },
@@ -183,23 +183,23 @@ describe SemanticPuppet::VersionRange do
       expressions = {
         [ '1.2 <1.2.5' ] => {
           :to_str   => '>=1.2.0 <1.2.5',
-          :includes => [ '1.2.0-0', '1.2.4' ],
-          :excludes => [ '1.1.999', '1.2.5-0', '1.9.0' ],
+          :includes => [ '1.2.0', '1.2.4' ],
+          :excludes => [ '1.1.999', '1.2.0-0', '1.2.5-0', '1.9.0' ],
         },
         [ '1 <=1.2.5' ] => {
-          :to_str   => '>=1.0.0 <1.2.6',
-          :includes => [ '1.0.0-0', '1.2.5' ],
-          :excludes => [ '0.999.999', '1.2.6-0', '1.9.0' ],
+          :to_str   => '>=1.0.0 <=1.2.5',
+          :includes => [ '1.0.0', '1.2.5' ],
+          :excludes => [ '0.999.999', '1.0.0-0', '1.2.6-0', '1.9.0' ],
         },
         [ '>1.0.0 >2.0.0 >=3.0.0 <5.0.0' ] => {
           :to_str   => '>=3.0.0 <5.0.0',
-          :includes => [ '3.0.0-0', '4.999.999' ],
-          :excludes => [ '2.999.999', '5.0.0-0' ],
+          :includes => [ '3.0.0', '4.999.999' ],
+          :excludes => [ '2.999.999', '3.0.0-0', '5.0.0-0' ],
         },
         [ '<1.0.0 >2.0.0' ] => {
           :to_str   => '<0.0.0',
           :includes => [  ],
-          :excludes => [ '0.0.0-0' ],
+          :excludes => [ '0.0.0-0', '0.0.0' ],
         },
       }
 
