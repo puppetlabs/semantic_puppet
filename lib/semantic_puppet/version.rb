@@ -115,12 +115,12 @@ module SemanticPuppet
 
     def to_s
       s = "#{@major}.#{@minor}.#{@patch}"
-      unless @prerelease.nil? || @prerelease.empty?
+      unless @prerelease.nil?
         s << '-'
         @prerelease.each { |p| s << p.to_s << '.' }
         s.chomp!('.')
       end
-      unless @build.nil? || @build.empty?
+      unless @build.nil?
         s << '+'
         @build.each { |p| s << p.to_s << '.' }
         s.chomp!('.')
@@ -156,10 +156,6 @@ module SemanticPuppet
         end
         mine.size <=> your_max
       end
-    end
-
-    def first_prerelease
-      self.class.new(@major, @minor, @patch, [])
     end
 
     # Version string matching regexes

@@ -4,11 +4,17 @@ require 'semantic_puppet/version'
 describe SemanticPuppet::VersionRange do
 
   describe '.parse' do
+    def self.test_expressions(expressions)
+      expressions.each do |range, vs|
+        test_range(range, vs[:to_str], vs[:includes], vs[:excludes])
+      end
+    end
+
     def self.test_range(range_list, str, includes, excludes)
       Array(range_list).each do |expr|
         example "#{expr.inspect} stringifies as #{str}" do
           range = SemanticPuppet::VersionRange.parse(expr)
-          expect(range.to_s).to eql str
+          expect(range.inspect).to eql str
         end
 
         includes.each do |vstring|
@@ -40,7 +46,7 @@ describe SemanticPuppet::VersionRange do
     end
 
     context 'loose version expressions' do
-      expressions = {
+      test_expressions(
         [ '1.2.3-alpha' ] => {
           :to_str   => '1.2.3-alpha',
           :includes => [ '1.2.3-alpha'  ],
@@ -61,15 +67,11 @@ describe SemanticPuppet::VersionRange do
           :includes => [ '1.0.0', '1.999.0' ],
           :excludes => [ '0.999.999', '1.0.0-alpha', '2.0.0-0' ],
         },
-      }
-
-      expressions.each do |range, vs|
-        test_range(range, vs[:to_str], vs[:includes], vs[:excludes])
-      end
+      )
     end
 
     context 'open-ended expressions' do
-      expressions = {
+      test_expressions(
         [ '>1.2.3', '> 1.2.3' ] => {
           :to_str   => '>1.2.3',
           :includes => [ '999.0.0' ],
@@ -113,15 +115,11 @@ describe SemanticPuppet::VersionRange do
           :includes => [ '0.0.0', '1.2.3-alpha' ],
           :excludes => [ '0.0.0-0', '1.2.3-alpha0', '1.2.3-alpha.0', '1.2.3-alpha'.next ],
         },
-      }
-
-      expressions.each do |range, vs|
-        test_range(range, vs[:to_str], vs[:includes], vs[:excludes])
-      end
+      )
     end
 
     context '"reasonably close" expressions' do
-      expressions = {
+      test_expressions(
         [ '~ 1', '~1' ] => {
           :to_str   => '>=1.0.0 <2.0.0',
           :includes => [ '1.0.0', '1.999.999' ],
@@ -142,15 +140,11 @@ describe SemanticPuppet::VersionRange do
           :includes => [ '1.2.3-alpha', '1.2.3' ],
           :excludes => [ '1.2.3-alph', '1.2.4-0' ],
         },
-      }
-
-      expressions.each do |range, vs|
-        test_range(range, vs[:to_str], vs[:includes], vs[:excludes])
-      end
+      )
     end
 
     context 'inclusive range expressions' do
-      expressions = {
+      test_expressions(
         '1.2.3 - 1.3.4' => {
           :to_str   => '>=1.2.3 <=1.3.4',
           :includes => [ '1.2.3', '1.3.4' ],
@@ -172,15 +166,11 @@ describe SemanticPuppet::VersionRange do
           :includes => [ '1.2.3-alpha', '1.3.4-alpha' ],
           :excludes => [ '1.2.3-alph', '1.3.4-alpha0', '1.3.5' ],
         },
-      }
-
-      expressions.each do |range, vs|
-        test_range(range, vs[:to_str], vs[:includes], vs[:excludes])
-      end
+      )
     end
 
     context 'unioned expressions' do
-      expressions = {
+      test_expressions(
         [ '1.2 <1.2.5' ] => {
           :to_str   => '>=1.2.0 <1.2.5',
           :includes => [ '1.2.0', '1.2.4' ],
@@ -201,10 +191,84 @@ describe SemanticPuppet::VersionRange do
           :includes => [  ],
           :excludes => [ '0.0.0-0', '0.0.0' ],
         },
-      }
+      )
+    end
 
-      expressions.each do |range, vs|
-        test_range(range, vs[:to_str], vs[:includes], vs[:excludes])
+    context 'ored expressions' do
+      context 'overlapping' do
+        test_expressions(
+          [ '>=1.2.3 || 1.2.5' ] => {
+            :to_str   => '>=1.2.3',
+            :includes => [ '1.2.3', '1.2.4' ],
+            :excludes => [ '1.2.3-0', '1.2.4-0' ],
+          },
+          [ '>=1.2.3 <=1.2.5 || >=1.2.5 <1.3.0' ] => {
+            :to_str   => '>=1.2.3 <1.3.0',
+            :includes => [ '1.2.3', '1.2.6' ],
+            :excludes => [ '1.2.3-0', '1.2.6-0' ],
+          },
+        )
+      end
+
+      context 'adjacent' do
+        test_expressions(
+          [ '1.2.3 || 1.2.4 || 1.2.5' ] => {
+            :to_str   => '>=1.2.3 <=1.2.5',
+            :includes => [ '1.2.3', '1.2.5' ],
+            :excludes => [ '1.2.3-0', '1.2.5-0' ],
+          },
+          [ '>=1.2.3 <1.2.5 || >=1.2.5 <1.3.0' ] => {
+            :to_str   => '>=1.2.3 <1.3.0',
+            :includes => [ '1.2.3', '1.2.6' ],
+            :excludes => [ '1.2.3-0', '1.2.6-0' ],
+          },
+        )
+
+        let(:range) { SemanticPuppet::VersionRange.parse('>=1.2.3 <1.2.5 || >=1.2.5 <1.3.0') }
+
+        it 'returns expected begin' do
+          expect(range.begin.to_s).to eql('1.2.3')
+        end
+
+        it 'returns nil on end' do
+          expect(range.end.to_s).to eql('1.3.0')
+        end
+
+        it 'returns nil on exclude_begin?' do
+          expect(range.exclude_begin?).to be_falsey
+        end
+
+        it 'returns nil on exclude_end?' do
+          expect(range.exclude_end?).to be_truthy
+        end
+      end
+
+      context 'non-overlapping' do
+        test_expressions(
+          [ '1.2.3 || 1.2.5' ] => {
+            :to_str   => '1.2.3 || 1.2.5',
+            :includes => [ '1.2.3', '1.2.5' ],
+            :excludes => [ '1.2.4', '1.2.3-0', '1.2.5-0' ],
+          },
+        )
+
+        let(:range) { SemanticPuppet::VersionRange.parse('1.2.3 || 1.2.5') }
+
+        it 'returns nil on begin' do
+          expect(range.begin).to be_nil
+        end
+
+        it 'returns nil on end' do
+          expect(range.end).to be_nil
+        end
+
+        it 'returns nil on exclude_begin?' do
+          expect(range.exclude_begin?).to be_nil
+        end
+
+        it 'returns nil on exclude_end?' do
+          expect(range.exclude_end?).to be_nil
+        end
       end
     end
 
