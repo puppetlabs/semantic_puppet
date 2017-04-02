@@ -80,6 +80,10 @@ module SemanticPuppet
       @prerelease.nil? || @prerelease.empty?
     end
 
+    def to_stable
+      @prerelease.nil? ? self : Version.new(@major, @minor, @patch, nil, @build)
+    end
+
     def build
       @build.nil? || @build.empty? ? nil : @build.join('.')
     end
