@@ -73,24 +73,28 @@ module SemanticPuppet
         else
           # Split on whitespace
           simples = range.split(RANGE_SPLIT).map do |simple|
-            raise ArgumentError, _("Unparsable version range: \"%{range}\"") % { range: range_string } unless simple =~ SIMPLE_EXPR
-            case $1
+            match_data = SIMPLE_EXPR.match(simple)
+            raise ArgumentError, _("Unparsable version range: \"%{range}\"") % { range: range_string } unless match_data
+            operand = match_data[2]
+
+            # Case based on operator
+            case match_data[1]
             when '~', '~>', '~='
-              parse_tilde($2)
+              parse_tilde(operand)
             when '^'
-              parse_caret($2)
+              parse_caret(operand)
             when '>'
-              parse_gt_version($2)
+              parse_gt_version(operand)
             when '>='
-              GtEqRange.new(parse_version($2))
+              GtEqRange.new(parse_version(operand))
             when '<'
-              LtRange.new(parse_version($2))
+              LtRange.new(parse_version(operand))
             when '<='
-              parse_lteq_version($2)
+              parse_lteq_version(operand)
             when '='
-              parse_xrange($2)
+              parse_xrange(operand)
             else
-              parse_xrange($2)
+              parse_xrange(operand)
             end
           end
           simples.size == 1 ? simples[0] : MinMaxRange.create(*simples)
@@ -164,7 +168,7 @@ module SemanticPuppet
     private_class_method :allow_minor_updates
 
     def self.digit(str)
-      str.nil? || UPPER_X == str || LOWER_X == str || STAR == str ? nil : str.to_i
+      (str.nil? || UPPER_X == str || LOWER_X == str || STAR == str) ? nil : str.to_i
     end
     private_class_method :digit
 
@@ -290,23 +294,23 @@ module SemanticPuppet
       @ranges.size == 1 ? @ranges[0].end : nil
     end
 
-    # Returns `true` if the beginning is included in the range.
+    # Returns `true` if the beginning is excluded from the range.
     #
     # Since this really is an OR between disparate ranges, it may have multiple beginnings. This method
     # returns `nil` if that is the case.
     #
-    # @return [Boolean] true if the beginning is included in the range, or `nil` if there are multiple beginnings
+    # @return [Boolean] `true` if the beginning is excluded from the range, `false` if included, or `nil` if there are multiple beginnings
     # @api public
     def exclude_begin?
       @ranges.size == 1 ? @ranges[0].exclude_begin? : nil
     end
 
-    # Returns `true` if the end is included in the range.
+    # Returns `true` if the end is excluded from the range.
     #
     # Since this really is an OR between disparate ranges, it may have multiple ends. This method
     # returns `nil` if that is the case.
     #
-    # @return [Boolean] true if the end is included in the range, or `nil` if there are multiple ends
+    # @return [Boolean] `true` if the end is excluded from the range, `false` if not, or `nil` if there are multiple ends
     # @api public
     def exclude_end?
       @ranges.size == 1 ? @ranges[0].exclude_end? : nil

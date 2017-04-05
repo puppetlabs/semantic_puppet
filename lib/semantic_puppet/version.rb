@@ -71,8 +71,9 @@ module SemanticPuppet
       end
     end
 
+    # @return [String] the `prerelease` identifier as a string without the leading '-'
     def prerelease
-      @prerelease.nil? || @prerelease.empty? ? nil : @prerelease.join('.')
+      (@prerelease.nil? || @prerelease.empty?) ? nil : @prerelease.join('.')
     end
 
     # @return [Boolean] true if this is a stable release
@@ -80,12 +81,14 @@ module SemanticPuppet
       @prerelease.nil? || @prerelease.empty?
     end
 
+    # @return [Version] this version stripped from any prerelease identifier.
     def to_stable
       @prerelease.nil? ? self : Version.new(@major, @minor, @patch, nil, @build)
     end
 
+    # @return [String] the `build` identifier as a string without the leading '+'
     def build
-      @build.nil? || @build.empty? ? nil : @build.join('.')
+      (@build.nil? || @build.empty?) ? nil : @build.join('.')
     end
 
     def <=>(other)
@@ -115,15 +118,26 @@ module SemanticPuppet
 
     def to_s
       s = "#{@major}.#{@minor}.#{@patch}"
+
+      # Appending the @prerelease and @build in a thoroughly tested and optimized
+      # way. Using interpolations and/or array joins may look simpler but will slows
+      # things down. Don't change this code without measuring performance of new
+      # solution.
       unless @prerelease.nil?
-        s << '-'
-        @prerelease.each { |p| s << p.to_s << '.' }
-        s.chomp!('.')
+        s << '-' << @prerelease[0].to_s
+        i = 0
+        l = @prerelease.length
+        while (i += 1) < l
+          s << '.' << @prerelease[i].to_s
+        end
       end
       unless @build.nil?
-        s << '+'
-        @build.each { |p| s << p.to_s << '.' }
-        s.chomp!('.')
+        s << '+' << @build[0].to_s
+        i = 0
+        l = @build.length
+        while (i += 1) < l
+          s << '.' << @build[i].to_s
+        end
       end
       s
     end
@@ -135,16 +149,26 @@ module SemanticPuppet
 
     def compare_prerelease(other)
       mine = @prerelease
+
+      # Need to use the instance variable here to avoid getting a string
       yours = other.instance_variable_get(:@prerelease)
+
+      # A version that has a prerelease is always less than a version that doesn't
       if mine.nil?
         yours.nil? ? 0 : 1
       elsif yours.nil?
         -1
       else
+        # Compare all prerelease identifier segments that can be compared. Should
+        # all segments compare equal up to the point where one of the prereleases
+        # have no more segments, then the one with more segements is greater.
         your_max = yours.size
         mine.each_with_index do |x, idx|
+          # 'mine' win if 'your' list of segments is exhausted
           return 1 if idx >= your_max
           y = yours[idx]
+
+          # Integer always wins over String
           cmp = if x.is_a?(Integer)
             y.is_a?(Integer) ? x <=> y : -1
           elsif y.is_a?(Integer)
@@ -152,8 +176,13 @@ module SemanticPuppet
           else
             x <=> y
           end
+
+          # No need to continue if a diff is found
           return cmp unless cmp == 0
         end
+
+        # All segments, up to the point where at least one list of segement is exhausted,
+        # compared equal. The one with the highest segment count wins.
         mine.size <=> your_max
       end
     end
