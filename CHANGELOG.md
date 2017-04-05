@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 1.0.0 - 2017-04-05
+- Complete rewrite of the VersionRange to make it compatible with Node Semver
+- General speedup of Version (hash, <=>, and to_s in particular)
+
 ## 0.1.4 - 2016-07-06
 ### Changed
 - Externalized all user-facing strings using gettext libraries to support future localization.

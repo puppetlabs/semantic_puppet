@@ -45,22 +45,22 @@ describe SemanticPuppet::Dependency do
       before { SemanticPuppet::Dependency.add_source(source) }
 
       it 'queries the source for release information' do
-        source.should_receive(:fetch).with('module_name').and_return([])
+        expect(source).to receive(:fetch).with('module_name').and_return([])
 
         SemanticPuppet::Dependency.query('module_name' => '1.0.0')
       end
 
       it 'queries the source for each dependency' do
-        source.should_receive(:fetch).with('module_name').and_return([
+        expect(source).to receive(:fetch).with('module_name').and_return([
           create_release(source, 'module_name', '1.0.0', 'bar' => '1.0.0')
         ])
-        source.should_receive(:fetch).with('bar').and_return([])
+        expect(source).to receive(:fetch).with('bar').and_return([])
 
         SemanticPuppet::Dependency.query('module_name' => '1.0.0')
       end
 
       it 'queries the source for each dependency only once' do
-        source.should_receive(:fetch).with('module_name').and_return([
+        expect(source).to receive(:fetch).with('module_name').and_return([
           create_release(
             source,
             'module_name',
@@ -68,23 +68,23 @@ describe SemanticPuppet::Dependency do
             'bar' => '1.0.0', 'baz' => '0.0.2'
           )
         ])
-        source.should_receive(:fetch).with('bar').and_return([
+        expect(source).to receive(:fetch).with('bar').and_return([
           create_release(source, 'bar', '1.0.0', 'baz' => '0.0.3')
         ])
-        source.should_receive(:fetch).with('baz').once.and_return([])
+        expect(source).to receive(:fetch).with('baz').once.and_return([])
 
         SemanticPuppet::Dependency.query('module_name' => '1.0.0')
       end
 
       it 'returns a ModuleRelease with the requested dependencies' do
-        source.stub(:fetch).and_return([])
+        allow(source).to receive(:fetch).and_return([])
 
         result = SemanticPuppet::Dependency.query('foo' => '1.0.0', 'bar' => '1.0.0')
         expect(result.dependency_names).to match_array %w[ foo bar ]
       end
 
       it 'populates the returned ModuleRelease with related dependencies' do
-        source.stub(:fetch).and_return(
+        allow(source).to receive(:fetch).and_return(
           [ foo = create_release(source, 'foo', '1.0.0', 'bar' => '1.0.0') ],
           [ bar = create_release(source, 'bar', '1.0.0') ]
         )
@@ -95,7 +95,7 @@ describe SemanticPuppet::Dependency do
       end
 
       it 'populates all returned ModuleReleases with related dependencies' do
-        source.stub(:fetch).and_return(
+        allow(source).to receive(:fetch).and_return(
           [ foo = create_release(source, 'foo', '1.0.0', 'bar' => '1.0.0') ],
           [ bar = create_release(source, 'bar', '1.0.0', 'baz' => '0.1.0') ],
           [ baz = create_release(source, 'baz', '0.1.0', 'baz' => '1.0.0') ]
@@ -120,23 +120,23 @@ describe SemanticPuppet::Dependency do
       end
 
       it 'queries each source in turn' do
-        source1.should_receive(:fetch).with('module_name').and_return([])
-        source2.should_receive(:fetch).with('module_name').and_return([])
-        source3.should_receive(:fetch).with('module_name').and_return([])
+        expect(source1).to receive(:fetch).with('module_name').and_return([])
+        expect(source2).to receive(:fetch).with('module_name').and_return([])
+        expect(source3).to receive(:fetch).with('module_name').and_return([])
 
         SemanticPuppet::Dependency.query('module_name' => '1.0.0')
       end
 
       it 'resolves all dependencies against all sources' do
-        source1.should_receive(:fetch).with('module_name').and_return([
+        expect(source1).to receive(:fetch).with('module_name').and_return([
           create_release(source1, 'module_name', '1.0.0', 'bar' => '1.0.0')
         ])
-        source2.should_receive(:fetch).with('module_name').and_return([])
-        source3.should_receive(:fetch).with('module_name').and_return([])
+        expect(source2).to receive(:fetch).with('module_name').and_return([])
+        expect(source3).to receive(:fetch).with('module_name').and_return([])
 
-        source1.should_receive(:fetch).with('bar').and_return([])
-        source2.should_receive(:fetch).with('bar').and_return([])
-        source3.should_receive(:fetch).with('bar').and_return([])
+        expect(source1).to receive(:fetch).with('bar').and_return([])
+        expect(source2).to receive(:fetch).with('bar').and_return([])
+        expect(source3).to receive(:fetch).with('bar').and_return([])
 
         SemanticPuppet::Dependency.query('module_name' => '1.0.0')
       end
@@ -147,7 +147,7 @@ describe SemanticPuppet::Dependency do
     def add_source_modules(name, versions, deps = {})
       versions = Array(versions)
       releases = versions.map { |ver| create_release(source, name, ver, deps) }
-      source.stub(:fetch).with(name).and_return(modules[name].concat(releases))
+      allow(source).to receive(:fetch).with(name).and_return(modules[name].concat(releases))
     end
 
     def subject(specs)
@@ -187,7 +187,7 @@ describe SemanticPuppet::Dependency do
         it 'returns the greatest prerelease version matching the range' do
           add_source_modules('foo', %w[ 1.0.0 1.1.0-a 1.1.0-b 2.0.0 ])
 
-          expect(foo('1.1.x')).to   eql %w[ 1.1.0-b ]
+          expect(foo('>1.1.0-a <2.0.0')).to eql %w[ 1.1.0-b ]
           expect(foo('1.1.0-a')).to eql %w[ 1.1.0-a ]
         end
       end
@@ -226,7 +226,7 @@ describe SemanticPuppet::Dependency do
 
       context 'when the dependency has no stable versions' do
         it 'returns the greatest prerelease version matching the range' do
-          add_source_modules('foo', '1.1.0', 'bar' => '1.1.x')
+          add_source_modules('foo', '1.1.0', 'bar' => '>=1.1.0-0 <1.2.0')
           add_source_modules('foo', '1.1.1', 'bar' => '1.1.0-a')
           add_source_modules('bar', %w[ 1.0.0 1.1.0-a 1.1.0-b 2.0.0 ])
 
