@@ -1,4 +1,4 @@
-require 'gettext-setup'
+require 'gettext-setup/gettext-setup'
 
 module SemanticPuppet
   GettextSetup.initialize(File.absolute_path('../locales', File.dirname(__FILE__)))
