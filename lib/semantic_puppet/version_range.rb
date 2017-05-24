@@ -10,9 +10,11 @@ module SemanticPuppet
     LOWER_X = 'x'.freeze
     STAR = '*'.freeze
 
-    NR = '0|[1-9][0-9]*'.freeze
-    XR = '(x|X|\*|' + NR + ')'.freeze
-    XR_NC = '(?:x|X|\*|' + NR + ')'.freeze
+    NR = '(0|[1-9][0-9]*)'.freeze
+    NR_NC = '(?:0|[1-9][0-9]*)'.freeze
+
+    XR = '(x|X|\*|' + NR_NC + ')'.freeze
+    XR_NC = '(?:x|X|\*|' + NR_NC + ')'.freeze
 
     PART = '(?:[0-9A-Za-z-]+)'.freeze
     PARTS = PART + '(?:\.' + PART + ')*'.freeze
@@ -31,6 +33,7 @@ module SemanticPuppet
     HYPHEN = '(' + PARTIAL + ')\s+-\s+(' + PARTIAL + ')'.freeze
     HYPHEN_EXPR = /\A#{HYPHEN}\z/.freeze
 
+    VERSION_EXPR = /\A#{NR}(?:\.#{NR}(?:\.#{NR}#{QUALIFIER})?)?\z/.freeze
     PARTIAL_EXPR = /\A#{XR}(?:\.#{XR}(?:\.#{XR}#{QUALIFIER})?)?\z/.freeze
 
     LOGICAL_OR = /\s*\|\|\s*/.freeze
@@ -69,7 +72,7 @@ module SemanticPuppet
 
       new(ranges.map do |range|
         if range =~ HYPHEN_EXPR
-          MinMaxRange.create(GtEqRange.new(parse_version($1)), LtEqRange.new(parse_version($2)))
+          MinMaxRange.create(GtEqRange.new(parse_version($1, range_string)), LtEqRange.new(parse_version($2, range_string)))
         else
           # Split on whitespace
           simples = range.split(RANGE_SPLIT).map do |simple|
@@ -80,21 +83,21 @@ module SemanticPuppet
             # Case based on operator
             case match_data[1]
             when '~', '~>', '~='
-              parse_tilde(operand)
+              parse_tilde(operand, range_string)
             when '^'
-              parse_caret(operand)
+              parse_caret(operand, range_string)
             when '>'
-              parse_gt_version(operand)
+              parse_gt_version(operand, range_string)
             when '>='
-              GtEqRange.new(parse_version(operand))
+              GtEqRange.new(parse_version(operand, range_string))
             when '<'
-              LtRange.new(parse_version(operand))
+              LtRange.new(parse_version(operand, range_string))
             when '<='
-              parse_lteq_version(operand)
+              parse_lteq_version(operand, range_string)
             when '='
-              parse_xrange(operand)
+              parse_xrange(operand, range_string)
             else
-              parse_xrange(operand)
+              parse_xrange(operand, range_string)
             end
           end
           simples.size == 1 ? simples[0] : MinMaxRange.create(*simples)
@@ -102,28 +105,28 @@ module SemanticPuppet
       end.uniq, range_string).freeze
     end
 
-    def self.parse_partial(expr)
+    def self.parse_partial(expr, full_expr)
       match_data = PARTIAL_EXPR.match(expr)
-      raise ArgumentError, _("Unparsable version range: \"%{expr}\"") % { expr: expr } unless match_data
+      raise ArgumentError, _("Unparsable version range: \"%{expr}\"") % { expr: full_expr } unless match_data
       match_data
     end
     private_class_method :parse_partial
 
-    def self.parse_caret(expr)
-      match_data = parse_partial(expr)
+    def self.parse_caret(expr, full_expr)
+      match_data = match_version(expr, full_expr)
       major = digit(match_data[1])
       major == 0 ? allow_patch_updates(major, match_data) : allow_minor_updates(major, match_data)
     end
     private_class_method :parse_caret
 
-    def self.parse_tilde(expr)
-      match_data = parse_partial(expr)
+    def self.parse_tilde(expr, full_expr)
+      match_data = match_version(expr, full_expr)
       allow_patch_updates(digit(match_data[1]), match_data)
     end
     private_class_method :parse_tilde
 
-    def self.parse_xrange(expr)
-      match_data = parse_partial(expr)
+    def self.parse_xrange(expr, full_expr)
+      match_data = parse_partial(expr, full_expr)
       allow_patch_updates(digit(match_data[1]), match_data, false)
     end
     private_class_method :parse_xrange
@@ -172,8 +175,15 @@ module SemanticPuppet
     end
     private_class_method :digit
 
-    def self.parse_version(expr)
-      match_data = parse_partial(expr)
+    def self.match_version(expr, full_expr)
+      match_data = VERSION_EXPR.match(expr)
+      raise ArgumentError, _("Unparsable version range: \"%{expr}\"") % { expr: full_expr } unless match_data
+      match_data
+    end
+    private_class_method :match_version
+
+    def self.parse_version(expr, full_expr)
+      match_data = match_version(expr, full_expr)
       major = digit(match_data[1]) || 0
       minor = digit(match_data[2]) || 0
       patch = digit(match_data[3]) || 0
@@ -181,8 +191,8 @@ module SemanticPuppet
     end
     private_class_method :parse_version
 
-    def self.parse_gt_version(expr)
-      match_data = parse_partial(expr)
+    def self.parse_gt_version(expr, full_expr)
+      match_data = match_version(expr, full_expr)
       major = digit(match_data[1])
       return LtRange::MATCH_NOTHING unless major
       minor = digit(match_data[2])
@@ -193,8 +203,8 @@ module SemanticPuppet
     end
     private_class_method :parse_gt_version
 
-    def self.parse_lteq_version(expr)
-      match_data = parse_partial(expr)
+    def self.parse_lteq_version(expr, full_expr)
+      match_data = match_version(expr, full_expr)
       major = digit(match_data[1])
       return AllRange.SINGLETON unless major
       minor = digit(match_data[2])
