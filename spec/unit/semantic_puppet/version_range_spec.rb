@@ -273,9 +273,20 @@ describe SemanticPuppet::VersionRange do
     end
 
     context 'invalid expressions' do
-      example 'raise an appropriate exception' do
-        ex = [ ArgumentError, 'Unparsable version range: "invalid"' ]
-        expect { SemanticPuppet::VersionRange.parse('invalid') }.to raise_error(*ex)
+      [
+        ['invalid', 'invalid'],
+        ['<0.7.x', '0.7.x'],
+        ['<=0.7.x', '0.7.x'],
+        ['>0.7.x', '0.7.x'],
+        ['>=0.7.x', '0.7.x'],
+        ['^0.7.x', '0.7.x'],
+        ['~0.7.x', '0.7.x'],
+        ['>=*', '*'],
+      ].each do |expr, err_expr|
+        example "#{expr.inspect} raises an appropriate exception" do
+          ex = [ ArgumentError, %{Unparsable version range: "#{err_expr}"} ]
+          expect { SemanticPuppet::VersionRange.parse(expr) }.to raise_error(*ex)
+        end
       end
     end
   end
@@ -414,7 +425,6 @@ describe SemanticPuppet::VersionRange do
       ['~v0.5.4-pre', '0.6.1-pre'],
       ['=0.7.x', '0.8.0'],
       ['=0.7.x', '0.8.0-asdf'],
-      ['<0.7.x', '0.7.0'],
       ['~1.2.2', '1.3.0'],
       ['1.0.0 - 2.0.0', '2.2.3'],
       ['1.0.0', '1.0.1'],
@@ -441,7 +451,6 @@ describe SemanticPuppet::VersionRange do
       ['<1', '1.0.0-beta'],
       ['< 1', '1.0.0-beta'],
       ['=0.7.x', '0.8.2'],
-      ['<0.7.x', '0.7.2']
     ].each do |tuple|
       it "#{tuple[1]} should be above range #{tuple[0]}" do
         expect(above(tuple[1], tuple[0])).to be_truthy
@@ -453,7 +462,6 @@ describe SemanticPuppet::VersionRange do
       ['1.0.0 - 2.0.0', '1.2.3'],
       ['1.0.0 - 2.0.0', '0.9.9'],
       ['1.0.0', '1.0.0'],
-      ['>=*', '0.2.4'],
       ['', '1.0.0'],
       ['*', '1.2.3'],
       ['*', '1.2.3-foo'],
@@ -516,10 +524,7 @@ describe SemanticPuppet::VersionRange do
       ['~v0.5.4-pre', '0.5.5'],
       ['~v0.5.4-pre', '0.5.4'],
       ['=0.7.x', '0.7.2'],
-      ['>=0.7.x', '0.7.2'],
       ['=0.7.x', '0.7.0-asdf'],
-      ['>=0.7.x', '0.7.0-asdf'],
-      ['<=0.7.x', '0.6.2'],
       ['>0.2.3 >0.2.4 <=0.2.5', '0.2.5'],
       ['>=0.2.3 <=0.2.4', '0.2.4'],
       ['1.0.0 - 2.0.0', '2.0.0'],
@@ -569,7 +574,6 @@ describe SemanticPuppet::VersionRange do
       ['~v0.5.4-pre', '0.5.4-alpha'],
       ['=0.7.x', '0.6.0'],
       ['=0.7.x', '0.6.0-asdf'],
-      ['>=0.7.x', '0.6.0'],
       ['~1.2.2', '1.2.1'],
       ['1.0.0 - 2.0.0', '0.2.3'],
       ['1.0.0', '0.0.1'],
@@ -598,9 +602,7 @@ describe SemanticPuppet::VersionRange do
       ['=0.7.x', '0.6.2'],
       ['=0.7.x', '0.7.0-asdf'],
       ['^1', '1.0.0-0'],
-      ['>=0.7.x', '0.7.0-asdf'],
       ['1', '1.0.0-beta'],
-      ['>=0.7.x', '0.6.2']
     ].each do |tuple|
       it "#{tuple[1]} should be below range #{tuple[0]}" do
         expect(below(tuple[1], tuple[0])).to be_truthy
@@ -613,7 +615,6 @@ describe SemanticPuppet::VersionRange do
       ['1.0.0 - 2.0.0', '1.2.3'],
       ['1.0.0 - 2.0.0', '2.9.9'],
       ['1.0.0', '1.0.0'],
-      ['>=*', '0.2.4'],
       ['', '1.0.0'],
       ['*', '1.2.3'],
       ['>=1.0.0', '1.0.0'],
@@ -673,8 +674,6 @@ describe SemanticPuppet::VersionRange do
       ['~v0.5.4-pre', '0.5.5'],
       ['~v0.5.4-pre', '0.5.4'],
       ['=0.7.x', '0.7.2'],
-      ['>=0.7.x', '0.7.2'],
-      ['<=0.7.x', '0.6.2'],
       ['>0.2.3 >0.2.4 <=0.2.5', '0.2.5'],
       ['>=0.2.3 <=0.2.4', '0.2.4'],
       ['1.0.0 - 2.0.0', '2.0.0'],

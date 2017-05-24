@@ -10,9 +10,11 @@ module SemanticPuppet
     LOWER_X = 'x'.freeze
     STAR = '*'.freeze
 
-    NR = '0|[1-9][0-9]*'.freeze
-    XR = '(x|X|\*|' + NR + ')'.freeze
-    XR_NC = '(?:x|X|\*|' + NR + ')'.freeze
+    NR = '(0|[1-9][0-9]*)'.freeze
+    NR_NC = '(?:0|[1-9][0-9]*)'.freeze
+
+    XR = '(x|X|\*|' + NR_NC + ')'.freeze
+    XR_NC = '(?:x|X|\*|' + NR_NC + ')'.freeze
 
     PART = '(?:[0-9A-Za-z-]+)'.freeze
     PARTS = PART + '(?:\.' + PART + ')*'.freeze
@@ -31,6 +33,7 @@ module SemanticPuppet
     HYPHEN = '(' + PARTIAL + ')\s+-\s+(' + PARTIAL + ')'.freeze
     HYPHEN_EXPR = /\A#{HYPHEN}\z/.freeze
 
+    VERSION_EXPR = /\A#{NR}(?:\.#{NR}(?:\.#{NR}#{QUALIFIER})?)?\z/.freeze
     PARTIAL_EXPR = /\A#{XR}(?:\.#{XR}(?:\.#{XR}#{QUALIFIER})?)?\z/.freeze
 
     LOGICAL_OR = /\s*\|\|\s*/.freeze
@@ -110,14 +113,14 @@ module SemanticPuppet
     private_class_method :parse_partial
 
     def self.parse_caret(expr)
-      match_data = parse_partial(expr)
+      match_data = match_version(expr)
       major = digit(match_data[1])
       major == 0 ? allow_patch_updates(major, match_data) : allow_minor_updates(major, match_data)
     end
     private_class_method :parse_caret
 
     def self.parse_tilde(expr)
-      match_data = parse_partial(expr)
+      match_data = match_version(expr)
       allow_patch_updates(digit(match_data[1]), match_data)
     end
     private_class_method :parse_tilde
@@ -172,8 +175,15 @@ module SemanticPuppet
     end
     private_class_method :digit
 
+    def self.match_version(expr)
+      match_data = VERSION_EXPR.match(expr)
+      raise ArgumentError, _("Unparsable version range: \"%{expr}\"") % { expr: expr } unless match_data
+      match_data
+    end
+    private_class_method :match_version
+
     def self.parse_version(expr)
-      match_data = parse_partial(expr)
+      match_data = match_version(expr)
       major = digit(match_data[1]) || 0
       minor = digit(match_data[2]) || 0
       patch = digit(match_data[3]) || 0
@@ -182,7 +192,7 @@ module SemanticPuppet
     private_class_method :parse_version
 
     def self.parse_gt_version(expr)
-      match_data = parse_partial(expr)
+      match_data = match_version(expr)
       major = digit(match_data[1])
       return LtRange::MATCH_NOTHING unless major
       minor = digit(match_data[2])
@@ -194,7 +204,7 @@ module SemanticPuppet
     private_class_method :parse_gt_version
 
     def self.parse_lteq_version(expr)
-      match_data = parse_partial(expr)
+      match_data = match_version(expr)
       major = digit(match_data[1])
       return AllRange.SINGLETON unless major
       minor = digit(match_data[2])
