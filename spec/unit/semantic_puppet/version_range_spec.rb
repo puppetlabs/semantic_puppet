@@ -274,17 +274,17 @@ describe SemanticPuppet::VersionRange do
 
     context 'invalid expressions' do
       [
-        ['invalid', 'invalid'],
-        ['<0.7.x', '0.7.x'],
-        ['<=0.7.x', '0.7.x'],
-        ['>0.7.x', '0.7.x'],
-        ['>=0.7.x', '0.7.x'],
-        ['^0.7.x', '0.7.x'],
-        ['~0.7.x', '0.7.x'],
-        ['>=*', '*'],
-      ].each do |expr, err_expr|
+        'invalid',
+        '<0.7.x',
+        '<=0.7.x',
+        '>0.7.x',
+        '>=0.7.x',
+        '^0.7.x',
+        '~0.7.x',
+        '>=*',
+      ].each do |expr|
         example "#{expr.inspect} raises an appropriate exception" do
-          ex = [ ArgumentError, %{Unparsable version range: "#{err_expr}"} ]
+          ex = [ ArgumentError, %{Unparsable version range: "#{expr}"} ]
           expect { SemanticPuppet::VersionRange.parse(expr) }.to raise_error(*ex)
         end
       end
