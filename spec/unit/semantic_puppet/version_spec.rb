@@ -351,22 +351,199 @@ describe SemanticPuppet::Version do
   end
 
   describe '.valid?' do
-    # All the specific variations are tested in the .parse tests, so these are just basic
-    # smoke tests.
-
     def subject(str)
       SemanticPuppet::Version.valid?(str)
     end
 
-    it 'recognizes valid versions' do
-      expect(subject('1.0.1')).to be true
-      expect(subject('1.0.3-p324')).to be true
+    context 'Spec v2.0.0' do
+      context 'Section 2' do
+        # A normal version number MUST take the form X.Y.Z where X, Y, and Z are
+        # non-negative integers, and MUST NOT contain leading zeroes. X is the
+        # major version, Y is the minor version, and Z is the patch version.
+
+        it 'rejects versions that contain too few parts' do
+          expect(subject('1.2')).to be false
+        end
+
+        it 'rejects versions that contain too many parts' do
+          expect(subject('1.2.3.4')).to be false
+        end
+
+        it 'rejects versions that contain non-integers' do
+          expect(subject('x.2.3')).to be false
+          expect(subject('1.y.3')).to be false
+          expect(subject('1.2.z')).to be false
+        end
+
+        it 'rejects versions that contain negative integers' do
+          expect(subject('-1.2.3')).to be false
+          expect(subject('1.-2.3')).to be false
+          expect(subject('1.2.-3')).to be false
+        end
+
+        it 'rejects version numbers containing leading zeroes' do
+          expect(subject('01.2.3')).to be false
+          expect(subject('1.02.3')).to be false
+          expect(subject('1.2.03')).to be false
+        end
+
+        it 'permits zeroes in version number parts' do
+          expect(subject('0.2.3')).to be true
+          expect(subject('1.0.3')).to be true
+          expect(subject('1.2.0')).to be true
+        end
+      end
+
+      context 'Section 9' do
+        # A pre-release version MAY be denoted by appending a hyphen and a
+        # series of dot separated identifiers immediately following the patch
+        # version. Identifiers MUST comprise only ASCII alphanumerics and
+        # hyphen [0-9A-Za-z-]. Identifiers MUST NOT be empty. Numeric
+        # identifiers MUST NOT include leading zeroes. Pre-release versions
+        # have a lower precedence than the associated normal version. A
+        # pre-release version indicates that the version is unstable and
+        # might not satisfy the intended compatibility requirements as denoted
+        # by its associated normal version.
+        # Examples: 1.0.0-alpha, 1.0.0-alpha.1, 1.0.0-0.3.7, 1.0.0-x.7.z.92.
+
+        it 'rejects prerelease identifiers with non-alphanumerics' do
+          expect(subject('1.2.3-$100')).to be false
+          expect(subject('1.2.3-rc.1@me')).to be false
+        end
+
+        it 'rejects empty prerelease versions' do
+          expect(subject('1.2.3-')).to be false
+        end
+
+        it 'rejects empty prerelease version identifiers' do
+          expect(subject('1.2.3-.rc1')).to be false
+          expect(subject('1.2.3-rc1.')).to be false
+          expect(subject('1.2.3-rc..1')).to be false
+        end
+
+        it 'rejects numeric prerelease identifiers with leading zeroes' do
+          expect(subject('1.2.3-01')).to be false
+          expect(subject('1.2.3-rc.01')).to be false
+        end
+
+        it 'permits numeric prerelease identifiers of zero' do
+          expect(subject('1.2.3-0')).to be true
+          expect(subject('1.2.3-rc.0')).to be true
+        end
+
+        it 'permits non-numeric prerelease identifiers' do
+          expect(subject('1.2.3-DEADBEEF')).to be true
+          expect(subject('1.2.3-DE.AD.BE.EF')).to be true
+          expect(subject('2.1.0-12-BE-EF')).to be true
+        end
+
+        it 'permits non-numeric prerelease identifiers with leading zeroes' do
+          expect(subject('1.2.3-0xDEADBEEF')).to be true
+          expect(subject('1.2.3-rc.0x10c')).to be true
+          expect(subject('2.1.0-0016-13fae4a9')).to be true
+        end
+      end
+
+      context 'Section 10' do
+        # Build metadata MAY be denoted by appending a plus sign and a series
+        # of dot separated identifiers immediately following the patch or
+        # pre-release version. Identifiers MUST comprise only ASCII
+        # alphanumerics and hyphen [0-9A-Za-z-]. Identifiers MUST NOT be empty.
+        # Build metadata SHOULD be ignored when determining version precedence.
+        # Thus two versions that differ only in the build metadata, have the
+        # same precedence.
+        # Examples: 1.0.0-alpha+001, 1.0.0+20130313144700,
+        # 1.0.0-beta+exp.sha.5114f85.
+
+        it 'rejects build identifiers with non-alphanumerics' do
+          expect(subject('1.2.3+$100')).to be false
+          expect(subject('1.2.3+rc.1@me')).to be false
+        end
+
+        it 'rejects empty build metadata' do
+          expect(subject('1.2.3+')).to be false
+        end
+
+        it 'rejects empty build identifiers' do
+          expect(subject('1.2.3+.rc1')).to be false
+          expect(subject('1.2.3+rc1.')).to be false
+          expect(subject('1.2.3+rc..1')).to be false
+        end
+
+        it 'permits numeric build identifiers with leading zeroes' do
+          expect(subject('1.2.3+01')).to be true
+          expect(subject('1.2.3+rc.01')).to be true
+        end
+
+        it 'permits numeric build identifiers of zero' do
+          expect(subject('1.2.3+0')).to be true
+          expect(subject('1.2.3+rc.0')).to be true
+        end
+
+        it 'permits non-numeric build identifiers with leading zeroes' do
+          expect(subject('1.2.3+0xDEADBEEF')).to be true
+          expect(subject('1.2.3+rc.0x10c')).to be true
+        end
+      end
     end
 
-    it 'does not recognize invalid versions' do
-      expect(subject('1.0')).to be false      # too few segments
-      expect(subject('1.0.3.6')).to be false  # too many segments
-      expect(subject('1.03.14')).to be false  # leading zero in segment
+    context 'Spec v1.0.0' do
+      context 'Section 2' do
+        # A normal version number MUST take the form X.Y.Z where X, Y, and Z
+        # are integers. X is the major version, Y is the minor version, and Z
+        # is the patch version.
+
+        it 'rejects versions that contain too few parts' do
+          expect(subject('1.2')).to be false
+        end
+
+        it 'rejects versions that contain too many parts' do
+          expect(subject('1.2.3.4')).to be false
+        end
+
+        it 'rejects versions that contain non-integers' do
+          expect(subject('x.2.3')).to be false
+          expect(subject('1.y.3')).to be false
+          expect(subject('1.2.z')).to be false
+        end
+
+        it 'permits zeroes in version number parts' do
+          expect(subject('0.2.3')).to be true
+          expect(subject('1.0.3')).to be true
+          expect(subject('1.2.0')).to be true
+        end
+      end
+
+      context 'Section 4' do
+        # A pre-release version number MAY be denoted by appending an arbitrary
+        # string immediately following the patch version and a dash. The string
+        # MUST be comprised of only alphanumerics plus dash [0-9A-Za-z-].
+        # Pre-release versions satisfy but have a lower precedence than the
+        # associated normal version. Precedence SHOULD be determined by
+        # lexicographic ASCII sort order.
+        # For instance: 1.0.0-alpha1 < 1.0.0-beta1 < 1.0.0-beta2 < 1.0.0-rc1
+
+        it 'rejects prerelease identifiers with non-alphanumerics' do
+          expect(subject('1.2.3-$100')).to be false
+          expect(subject('1.2.3-rc.1@me')).to be false
+        end
+
+        it 'rejects empty prerelease versions' do
+          expect(subject('1.2.3-')).to be false
+        end
+
+        it 'rejects numeric prerelease identifiers with leading zeroes' do
+          expect(subject('1.2.3-01')).to be false
+        end
+
+        it 'permits numeric prerelease identifiers of zero' do
+          expect(subject('1.2.3-0')).to be true
+        end
+
+        it 'permits non-numeric prerelease identifiers with leading zeroes' do
+          expect(subject('1.2.3-0xDEADBEEF')).to be true
+        end
+      end
     end
   end
 
