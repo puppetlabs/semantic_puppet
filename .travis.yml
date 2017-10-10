@@ -8,6 +8,7 @@ sudo: false
 rvm:
   - "2.4.1"
   - "2.1.9"
+  - "2.0.0"
   - "1.9.3"
   - "jruby-19mode"
 jdk:
