@@ -12,10 +12,6 @@ Versions and Version Ranges and to query and resolve module dependencies.
 
 For sparse, but accurate documentation, please see the docs directory.
 
-Note that this is a 0 release version, and things can change. Expect that the
-version and version range code to stay relatively stable, but the module
-dependency code is expected to change.
-
 This library is used by a number of Puppet Labs projects, including
 [Puppet](https://github.com/puppetlabs/puppet) and
 [r10k](https://github.com/puppetlabs/r10k).
@@ -23,9 +19,8 @@ This library is used by a number of Puppet Labs projects, including
 Requirements
 ------------
 
-Semantic_puppet will work on several ruby versions, including 1.9.3, 2.0.0, and
-2.1.0. Ruby 1.8.7 is immediately deprecated as it is in
-[r10k](https://github.com/puppetlabs/r10k).
+Semantic_puppet will work on several ruby versions, including 1.9.3,
+2.0.0, 2.1.9 and 2.4.1. Please see the exact matrix in `.travis.yml`.
 
 No gem/library requirements.
 
@@ -48,14 +43,15 @@ install it out of a git repository:
 Usage
 -----
 
-SemanticPuppet is intended to be used as a library. 
+SemanticPuppet is intended to be used as a library.
 
 ### Version Range Operator Support
 
-SemanticPuppet will support the same version range operators as those used when
-publishing modules to [Puppet Forge](https://forge.puppetlabs.com) which is
-documented at 
-[Publishing Modules on the Puppet Forge](https://docs.puppetlabs.com/puppet/latest/reference/modules_publishing.html#dependencies-in-metadatajson).
+SemanticPuppet will support the same version range operators as those
+used when publishing modules to [Puppet
+Forge](https://forge.puppetlabs.com) which is documented at [Publishing
+Modules on the Puppet
+Forge](https://docs.puppetlabs.com/puppet/latest/reference/modules_publishing.html#dependencies-in-metadatajson).
 
 ### i18n
 
@@ -80,8 +76,9 @@ locale = FastGettext.set_locale "de_DE"
 Contributors
 ------------
 
-Pieter van de Bruggen wrote the library originally, with additions by Alex
-Dreyer, Jesse Scott and Anderson Mills.
+Pieter van de Bruggen wrote the library originally. See
+[https://github.com/puppetlabs/semantic_puppet/graphs/contributors](https://github.com/puppetlabs/semantic_puppet/graphs/contributors)
+for a list of contributors.
 
 ## Maintenance
 
@@ -90,4 +87,5 @@ Maintainers:
 * Jesse Scott, jesse@puppet.com
 * Anderson Mills, anderson@puppet.com
 
-Tickets: File at https://tickets.puppet.com/browse/FORGE
+Tickets: File at
+[https://tickets.puppet.com/browse/FORGE](https://tickets.puppet.com/browse/FORGE)
