@@ -22,8 +22,6 @@ spec = Gem::Specification.new do |s|
   # Dependencies
   s.required_ruby_version = '>= 1.9.3'
 
-  s.add_dependency "gettext-setup", ">= 0.3"
-
   s.add_development_dependency "json", "~> 1.8.3" if RUBY_VERSION < '2.0'
   s.add_development_dependency "rake"
   s.add_development_dependency "rspec"
