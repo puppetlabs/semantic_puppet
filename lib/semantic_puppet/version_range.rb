@@ -74,7 +74,7 @@ module SemanticPuppet
           # Split on whitespace
           simples = range.split(RANGE_SPLIT).map do |simple|
             match_data = SIMPLE_EXPR.match(simple)
-            raise ArgumentError, "Unparsable version range: \"#{range_string}\"") unless match_data
+            raise ArgumentError, "Unparsable version range: \"#{range_string}\"" unless match_data
             operand = match_data[2]
 
             # Case based on operator
