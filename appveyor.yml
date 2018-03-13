@@ -1,0 +1,18 @@
+version: 1.0.1.{build}
+clone_depth: 10
+environment:
+  matrix:
+    - RUBY_VERSION: 193
+    - RUBY_VERSION: 23-x64
+    - RUBY_VERSION: 21-x64
+matrix:
+  fast_finish: true
+install:
+  - set PATH=C:\Ruby%RUBY_VERSION%\bin;%PATH%
+  - bundle install --jobs 4 --retry 2
+build: off
+test_script:
+  - ruby -v
+  - gem -v
+  - bundle -v
+  - bundle exec rspec --format documentation --color spec/unit
