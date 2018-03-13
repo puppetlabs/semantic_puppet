@@ -74,7 +74,7 @@ module SemanticPuppet
           # Split on whitespace
           simples = range.split(RANGE_SPLIT).map do |simple|
             match_data = SIMPLE_EXPR.match(simple)
-            raise ArgumentError, _("Unparsable version range: \"%{range}\"") % { range: range_string } unless match_data
+            raise ArgumentError, "Unparsable version range: \"#{range_string}\"" unless match_data
             operand = match_data[2]
 
             # Case based on operator
@@ -104,7 +104,7 @@ module SemanticPuppet
 
     def self.parse_partial(expr)
       match_data = PARTIAL_EXPR.match(expr)
-      raise ArgumentError, _("Unparsable version range: \"%{expr}\"") % { expr: expr } unless match_data
+      raise ArgumentError, "Unparsable version range: \"#{expr}\"" unless match_data
       match_data
     end
     private_class_method :parse_partial
@@ -332,7 +332,7 @@ module SemanticPuppet
     # @return [VersionRange] the common subset
     # @api public
     def intersection(other)
-      raise ArgumentError, _("value must be a %{type}") % { :type => self.class.name } unless other.is_a?(VersionRange)
+      raise ArgumentError, "value must be a #{self.class.name}" unless other.is_a?(VersionRange)
       result = @ranges.map { |range| other.ranges.map { |o_range| range.intersection(o_range) } }.flatten
       result.compact!
       result.uniq!

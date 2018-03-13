@@ -15,7 +15,7 @@ module SemanticPuppet
     def self.parse(ver)
       match, major, minor, patch, prerelease, build = *ver.match(REGEX_FULL_RX)
 
-      raise ValidationFailure, _("Unable to parse '%{version}' as a semantic version identifier") % {version: ver} unless match
+      raise ValidationFailure, "Unable to parse '#{ver}' as a semantic version identifier" unless match
 
       new(major.to_i, minor.to_i, patch.to_i, parse_prerelease(prerelease), parse_build(build)).freeze
     end
@@ -42,7 +42,7 @@ module SemanticPuppet
       return nil unless prerelease
       prerelease.split('.').map do |x|
         if x =~ /^\d+$/
-          raise ValidationFailure, _('Numeric pre-release identifiers MUST NOT contain leading zeroes') if x.length > 1 && x.start_with?('0')
+          raise ValidationFailure, 'Numeric pre-release identifiers MUST NOT contain leading zeroes' if x.length > 1 && x.start_with?('0')
           x.to_i
         else
           x
