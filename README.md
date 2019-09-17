@@ -62,10 +62,5 @@ for a list of contributors.
 
 ## Maintenance
 
-Maintainers:
-
-* Jesse Scott, jesse@puppet.com
-* Anderson Mills, anderson@puppet.com
-
 Tickets: File at
 [https://tickets.puppet.com/browse/FORGE](https://tickets.puppet.com/browse/FORGE)
