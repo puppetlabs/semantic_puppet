@@ -19,6 +19,7 @@ notifications:
 sudo: false
 
 rvm:
+  - 2.7.0
   - "2.4.1"
   - "2.1.9"
   - "2.0.0"
