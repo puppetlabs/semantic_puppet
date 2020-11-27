@@ -5,7 +5,7 @@ describe SemanticPuppet::Dependency::UnsatisfiableGraph do
 
   let(:modules) { %w[ foo bar baz ] }
   let(:graph) { double('Graph', :modules => modules) }
-  let(:instance) { described_class.new(graph) }
+  let(:instance) { described_class.new(graph, ['a']) }
 
   subject { instance }
 

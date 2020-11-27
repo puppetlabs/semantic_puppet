@@ -37,6 +37,15 @@ module SemanticPuppet
 
     # @!endgroup
 
+    # Returns the unsatisfiable dependency, if any.
+    # @return String
+    def unsatisfiable
+      @module_dependencies ||= []
+      @satisfieds ||= []
+
+      (@module_dependencies - @satisfieds).first
+    end
+
     # Fetches a graph of modules and their dependencies from the currently
     # configured list of {Source}s.
     #
@@ -64,10 +73,12 @@ module SemanticPuppet
     # @param graph [Graph] the root of a dependency graph
     # @return [Array<ModuleRelease>] the list of releases to act on
     def resolve(graph)
+      @module_dependencies, @satisfieds = nil
+
       catch :next do
         return walk(graph, graph.dependencies.dup)
       end
-      raise UnsatisfiableGraph.new(graph)
+      raise UnsatisfiableGraph.new(graph, unsatisfiable)
     end
 
     # Fetches all available releases for the given module name.
@@ -100,6 +111,9 @@ module SemanticPuppet
     # @param considering [Array<GraphNode>] the set of releases being tested
     # @return [Array<GraphNode>] the list of releases to use, if successful
     def walk(graph, dependencies, *considering)
+      @satisfieds ||= []
+      @module_dependencies ||= []
+
       return considering if dependencies.empty?
 
       # Selecting a dependency from the collection...
@@ -113,6 +127,7 @@ module SemanticPuppet
 
       # ... we'll iterate through the list of possible versions in order.
       preferred_releases(deps).reverse_each do |dep|
+        @module_dependencies |= [name]
 
         # We should skip any releases that violate any module's constraints.
         unless [graph, *considering].all? { |x| x.satisfies_constraints?(dep) }
@@ -124,6 +139,8 @@ module SemanticPuppet
         unless graph.satisfies_graph? potential_solution
           next
         end
+
+        @satisfieds |= [name]
 
         catch :next do
           # After adding any new dependencies and imposing our own constraints
