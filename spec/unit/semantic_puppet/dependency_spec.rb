@@ -40,7 +40,7 @@ describe SemanticPuppet::Dependency do
     end
 
     context 'with one source' do
-      let(:source) { double('Source') }
+      let(:source) { double('Source', :priority => 0) }
 
       before { SemanticPuppet::Dependency.add_source(source) }
 
@@ -109,9 +109,9 @@ describe SemanticPuppet::Dependency do
     end
 
     context 'with multiple sources' do
-      let(:source1) { double('SourceOne') }
-      let(:source2) { double('SourceTwo') }
-      let(:source3) { double('SourceThree') }
+      let(:source1) { double('SourceOne', :priority => 0) }
+      let(:source2) { double('SourceTwo', :priority => 0) }
+      let(:source3) { double('SourceThree', :priority => 0) }
 
       before do
         SemanticPuppet::Dependency.add_source(source1)
