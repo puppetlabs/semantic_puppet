@@ -3,13 +3,19 @@ require 'semantic_puppet/dependency'
 module SemanticPuppet
   module Dependency
     class UnsatisfiableGraph < StandardError
-      attr_reader :graph
+      attr_reader :graph, :unsatisfied
 
-      def initialize(graph)
+      def initialize(graph, unsatisfied = nil)
         @graph = graph
 
         deps = sentence_from_list(graph.modules)
-        super "Could not find satisfying releases for #{deps}"
+
+        if unsatisfied
+          @unsatisfied = unsatisfied
+          super "Could not find satisfying releases of #{unsatisfied} for #{deps}"
+        else
+          super "Could not find satisfying releases for #{deps}"
+        end
       end
 
       private
