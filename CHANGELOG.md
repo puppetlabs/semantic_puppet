@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 1.0.3 - 2021-01-12
+- List failed module install dependencies
+- Add Ruby 2.7 to Travis and AppVeyor
+
 ## 1.0.2 - 2018-03-13
 - Removed i18n/gettext configuration and string externalization. After further consideration we have decided that
   as a library, semantic_puppet should not be attempting to configure global localization state and the localization
