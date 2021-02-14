@@ -42,7 +42,10 @@ describe SemanticPuppet::Dependency do
     context 'with one source' do
       let(:source) { double('Source', :priority => 0) }
 
-      before { SemanticPuppet::Dependency.add_source(source) }
+      before do
+        SemanticPuppet::Dependency.clear_sources
+        SemanticPuppet::Dependency.add_source(source)
+      end
 
       it 'queries the source for release information' do
         expect(source).to receive(:fetch).with('module_name').and_return([])
