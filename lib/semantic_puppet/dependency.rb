@@ -73,7 +73,7 @@ module SemanticPuppet
     # @param graph [Graph] the root of a dependency graph
     # @return [Array<ModuleRelease>] the list of releases to act on
     def resolve(graph)
-      @module_dependencies, @satisfieds = nil
+      @module_dependencies = @satisfieds = nil
 
       catch :next do
         return walk(graph, graph.dependencies.dup)
