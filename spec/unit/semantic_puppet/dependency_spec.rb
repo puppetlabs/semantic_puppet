@@ -93,8 +93,8 @@ describe SemanticPuppet::Dependency do
         )
 
         result = SemanticPuppet::Dependency.query('foo' => '1.0.0', 'bar' => '1.0.0')
-        expect(result.dependencies['foo']).to eql SortedSet.new([ foo ])
-        expect(result.dependencies['bar']).to eql SortedSet.new([ bar ])
+        expect(result.dependencies['foo']).to eql [foo]
+        expect(result.dependencies['bar']).to eql [bar]
       end
 
       it 'populates all returned ModuleReleases with related dependencies' do
@@ -105,9 +105,9 @@ describe SemanticPuppet::Dependency do
         )
 
         result = SemanticPuppet::Dependency.query('foo' => '1.0.0')
-        expect(result.dependencies['foo']).to eql SortedSet.new([ foo ])
-        expect(foo.dependencies['bar']).to eql SortedSet.new([ bar ])
-        expect(bar.dependencies['baz']).to eql SortedSet.new([ baz ])
+        expect(result.dependencies['foo']).to eql [foo]
+        expect(foo.dependencies['bar']).to eql [bar]
+        expect(bar.dependencies['baz']).to eql [baz]
       end
     end
 
