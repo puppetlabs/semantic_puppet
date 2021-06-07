@@ -101,9 +101,9 @@ module SemanticPuppet
       def << (nodes)
         Array(nodes).group_by(&:name).each_pair do |name, nodes|
           changed = false
+          next unless dependencies.key?(name)
 
           nodes.each do |node|
-            next unless dependencies.key?(name)
             if satisfies_dependency?(node)
               dependencies[name] << node
               changed = true
