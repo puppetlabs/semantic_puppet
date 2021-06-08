@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 1.0.4 - 2021-06-08
+- Remove dependency on SortedSet
+- Add Ruby 3.0 to Travis and AppVeyor
+
 ## 1.0.3 - 2021-01-12
 - List failed module install dependencies
 - Add Ruby 2.7 to Travis and AppVeyor
