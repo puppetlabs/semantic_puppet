@@ -33,10 +33,10 @@ module SemanticPuppet
       end
 
       # @api internal
-      # @return [{ String => SortedSet<GraphNode> }] the satisfactory
+      # @return [{ String => Array<GraphNode> }] the satisfactory
       #         dependency nodes
       def dependencies
-        @_dependencies ||= Hash.new { |h, k| h[k] = SortedSet.new }
+        @_dependencies ||= Hash.new { |h, k| h[k] = Array.new }
       end
 
       # Adds the given dependency name to the list of dependencies.
@@ -99,11 +99,17 @@ module SemanticPuppet
       end
 
       def << (nodes)
-        Array(nodes).each do |node|
-          next unless dependencies.key?(node.name)
-          if satisfies_dependency?(node)
-            dependencies[node.name] << node
+        Array(nodes).group_by(&:name).each_pair do |name, nodes|
+          changed = false
+          next unless dependencies.key?(name)
+
+          nodes.each do |node|
+            if satisfies_dependency?(node)
+              dependencies[name] << node
+              changed = true
+            end
           end
+          dependencies[name].sort! if changed
         end
 
         return self

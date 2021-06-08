@@ -68,6 +68,16 @@ describe SemanticPuppet::Dependency::GraphNode do
       subject << bar3
       expect(Array(subject.dependencies['bar'])).to be_empty
     end
+
+    it 'sorts once the dependencies for a specific node' do
+      expect(subject.dependencies['bar']).to receive(:sort!).once
+      subject << [bar1, bar2]
+    end
+
+    it 'sorts the dependencies for each addition to the same node' do
+      expect(subject.dependencies['bar']).to receive(:sort!).twice
+      subject << bar1 << bar2
+    end
   end
 
   describe '#satisfied' do
