@@ -73,7 +73,7 @@ module SemanticPuppet
     # @param graph [Graph] the root of a dependency graph
     # @return [Array<ModuleRelease>] the list of releases to act on
     def resolve(graph)
-      @module_dependencies, @satisfieds = nil
+      @module_dependencies = @satisfieds = nil
 
       catch :next do
         return walk(graph, graph.dependencies.dup)
@@ -120,6 +120,8 @@ module SemanticPuppet
       name = dependencies.keys.sort.first
       deps = dependencies.delete(name)
 
+      @module_dependencies |= [name]
+
       # ... (and stepping over it if we've seen it before) ...
       unless (deps & considering).empty?
         return walk(graph, dependencies, *considering)
@@ -127,8 +129,6 @@ module SemanticPuppet
 
       # ... we'll iterate through the list of possible versions in order.
       preferred_releases(deps).reverse_each do |dep|
-        @module_dependencies |= [name]
-
         # We should skip any releases that violate any module's constraints.
         unless [graph, *considering].all? { |x| x.satisfies_constraints?(dep) }
           next

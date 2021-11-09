@@ -247,6 +247,16 @@ describe SemanticPuppet::Dependency do
           expect { foo('1.1.0') }.to raise_exception with_message
           expect { foo('1.1.0') }.to raise_exception /\bfoo\b/
         end
+
+        it 'sets unsatisfiable' do
+          add_source_modules('foo', %w[ 1.1.0 ], 'bar' => '1.x')
+          add_source_modules('bar', %w[ 0.0.1 0.1.0-a 0.1.0 ])
+
+          with_message = /Could not find satisfying releases/
+          expect { foo('1.1.0') }.to raise_exception with_message
+
+          expect(SemanticPuppet::Dependency.unsatisfiable).to eq('foo')
+        end
       end
     end
 
