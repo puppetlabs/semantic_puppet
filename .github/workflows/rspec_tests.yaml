@@ -20,7 +20,6 @@ jobs:
           - {os: windows-2019, ruby: '2.5'}
           - {os: windows-2019, ruby: '2.7'}
           - {os: windows-2019, ruby: '3.0'}
-          - {os: windows-2019, ruby: 'jruby-9.2.17.0'}
 
     runs-on: ${{ matrix.cfg.os }}
     steps:
@@ -35,7 +34,7 @@ jobs:
       - name: Update rubygems and install gems
         run: |
           gem update --system --silent --no-document
-          bundle config set without packaging development
+          bundle config set without packaging
           bundle install --jobs 4 --retry 3
       
-      - run: "bundle exec rake spec"
+      - run: bundle exec rake spec
