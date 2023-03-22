@@ -13,18 +13,16 @@ jobs:
     strategy:
       matrix:
         cfg:
-          - {os: ubuntu-18.04, ruby: '2.5'}
-          - {os: ubuntu-18.04, ruby: '2.7'}
-          - {os: ubuntu-18.04, ruby: '3.0'}
-          - {os: ubuntu-18.04, ruby: 'jruby-9.2.17.0'}
-          - {os: windows-2019, ruby: '2.5'}
+          - {os: ubuntu-20.04, ruby: '2.7'}
+          - {os: ubuntu-20.04, ruby: '3.0'}
+          - {os: ubuntu-20.04, ruby: 'jruby-9.4.2'}
           - {os: windows-2019, ruby: '2.7'}
           - {os: windows-2019, ruby: '3.0'}
 
     runs-on: ${{ matrix.cfg.os }}
     steps:
       - name: Checkout current PR
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install ruby version ${{ matrix.cfg.ruby }}
         uses: ruby/setup-ruby@v1
