@@ -20,7 +20,7 @@ spec = Gem::Specification.new do |s|
   s.require_paths = ["lib"]
 
   # Dependencies
-  s.required_ruby_version = '>= 1.9.3'
+  s.required_ruby_version = '>= 2.7.0'
 
   s.add_development_dependency "json", "~> 1.8.3" if RUBY_VERSION < '2.0'
   s.add_development_dependency "rake"

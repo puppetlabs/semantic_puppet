@@ -19,8 +19,7 @@ This library is used by a number of Puppet Labs projects, including
 Requirements
 ------------
 
-Semantic_puppet will work on several ruby versions, including 1.9.3,
-2.0.0, 2.1.9 and 2.4.1. Please see the exact matrix in `.travis.yml`.
+semantic_puppet will work on Ruby version 2.7 and greater.
 
 No gem/library requirements.
 
