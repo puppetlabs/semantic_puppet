@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 1.1.0 - 2023-04-10
+- Fix unsatisfiable if resolve() fails ([ekohl](https://github.com/ekohl))
+- Move from travis/appveyor to GitHub actions ([AriaXLi](https://github.com/AriaXLi))
+- Add Ruby 3.2 testing ([mhashizume](https://github.com/mhashizume))
+
 ## 1.0.4 - 2021-06-08
 - Remove dependency on SortedSet
 - Add Ruby 3.0 to Travis and AppVeyor
