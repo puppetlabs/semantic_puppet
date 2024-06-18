@@ -31,11 +31,5 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.cfg.ruby }}
-
-      - name: Update rubygems and install gems
-        run: |
-          gem update --system --silent --no-document
-          bundle config set without packaging
-          bundle install --jobs 4 --retry 3
-      
+          bundler-cache: true
       - run: bundle exec rake spec
