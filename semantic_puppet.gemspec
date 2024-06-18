@@ -22,7 +22,6 @@ spec = Gem::Specification.new do |s|
   # Dependencies
   s.required_ruby_version = '>= 2.7.0'
 
-  s.add_development_dependency "json", "~> 1.8.3" if RUBY_VERSION < '2.0'
   s.add_development_dependency "rake"
   s.add_development_dependency "rspec"
 
