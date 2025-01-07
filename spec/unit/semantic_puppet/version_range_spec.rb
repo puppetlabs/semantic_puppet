@@ -270,6 +270,16 @@ describe SemanticPuppet::VersionRange do
           expect(range.exclude_end?).to be_nil
         end
       end
+
+      context 'prerelease' do
+        test_expressions(
+          [ '>=5.0.1-rc0' || '>=0.5.0' ] => {
+            :to_str   => '>=5.0.1-rc0',
+            :includes => ['5.0.1-rc0', '5.0.1'], # should include 1.0.0
+            :excludes => ['1.0.0', '5.0.0-rc0', '5.0.2-rc0']
+          }
+        )
+      end
     end
 
     context 'invalid expressions' do
