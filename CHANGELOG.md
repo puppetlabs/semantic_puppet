@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 1.1.1 - 2025-01-07
+
+- Fix method name typo ([joshcooper](https://github.com/joshcooper))
+
 ## 1.1.0 - 2023-04-10
 - Fix unsatisfiable if resolve() fails ([ekohl](https://github.com/ekohl))
 - Move from travis/appveyor to GitHub actions ([AriaXLi](https://github.com/AriaXLi))
