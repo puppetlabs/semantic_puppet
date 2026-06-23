@@ -9,7 +9,7 @@ group(:development, optional: true) do
   unless RUBY_PLATFORM =~ /java/
     gem 'simplecov'
     gem 'cane'
-    gem 'yard'
+    gem 'yard', '>= 0.9.44'
     gem 'redcarpet'
   end
 end
